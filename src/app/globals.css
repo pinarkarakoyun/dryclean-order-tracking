@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens. Tailwind turns every --color-* into utilities
+ * (bg-primary, text-muted, border-border, ...), so colors are defined once here.
+ *
+ * Palette "atelier": warm ivory paper, ink black, brass accents.
+ * Light theme only: the users are older and one high-contrast theme is simpler.
+ */
+@theme inline {
+  --color-background: #faf7f2; /* ivory */
+  --color-surface: #ffffff;
+  --color-sand: #f1ebe1; /* alternate section background */
+  --color-foreground: #1d1c1a; /* ink */
+  --color-muted: #5f5a52; /* 6.5:1 on ivory */
+  --color-border: #e2dbcf;
+
+  --color-primary: #1d1c1a;
+  --color-primary-hover: #3a3733;
+  --color-primary-foreground: #faf7f2;
+
+  /* Brass: decorative lines and large text. Use accent-strong for small text (5.6:1). */
+  --color-accent: #b08a45;
+  --color-accent-strong: #7d5c24;
+
+  --font-sans: var(--font-open-sans);
+  /* Vidaloka: the serif of the shop sign and the current website's headings.
+     Playfair Display fills in the Turkish letters Vidaloka does not have. */
+  --font-display: var(--font-vidaloka), var(--font-playfair), serif;
+}
+
+html {
+  /* Slightly larger base size for readability (1rem = 18px). */
+  font-size: 112.5%;
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+  /* Vidaloka has only one weight: never fake a bold version of it. */
+  font-synthesis-weight: none;
+}
+
+@layer base {
+  h1,
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: -0.01em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/*
+ * Subtle animations (PRD §17). Only when the device does not ask for reduced motion.
+ * .reveal uses CSS scroll-driven animations: no JavaScript, and in browsers without
+ * support the content is simply visible.
+ */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(1.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .animate-fade-up {
+    animation: fade-up 0.8s ease-out both;
+  }
+
+  @supports (animation-timeline: view()) {
+    .reveal {
+      animation: fade-up linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 20%;
+    }
+  }
+}
