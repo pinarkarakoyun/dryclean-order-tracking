@@ -1,3 +1,7 @@
+## Git kuralları
+- Her mantıksal iş bitince commit'i Claude atar ve mesajını söyler.
+- Push YAPMA, yeni branch AÇMA, PR AÇMA. Bunları Pınar yapar.
+
 # Kuru Temizleme Sipariş Takip
 
 Antalya'daki gerçek bir kuru temizleme dükkânı için sipariş takip sistemi.
