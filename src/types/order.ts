@@ -21,7 +21,7 @@ export type Order = {
 
   // Required at creation
   customerName: string;
-  /** International (E.164) format, e.g. "+31612345678". */
+  /** International (E.164) format, e.g. "+905321234567". */
   customerPhone: string;
   /** Language for WhatsApp messages and the tracking link. */
   customerLanguage: Locale;

@@ -1,6 +1,6 @@
 import type { MissingField, Order, OrderStatus } from "@/types/order";
 
-const SHOP_TIME_ZONE = "Europe/Amsterdam";
+const SHOP_TIME_ZONE = "Europe/Istanbul";
 
 /** Today's date in the shop's time zone, as "YYYY-MM-DD". */
 export function todayInShop(now: Date = new Date()): string {

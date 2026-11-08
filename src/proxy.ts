@@ -5,7 +5,7 @@ import { routing } from "./i18n/routing";
 import { isOrderTrackingEnabled } from "./lib/features";
 import { SESSION_COOKIE, verifySessionToken } from "./lib/session";
 
-// Resolves the language from the URL (e.g. /tr/contact -> "tr", /contact -> default "nl").
+// Resolves the language from the URL (e.g. /tr/track -> "tr", /track -> default "tr").
 const handleI18nRouting = createMiddleware(routing);
 
 const LOCALE_PREFIX = `(/(?:${routing.locales.join("|")}))?`;

@@ -2,7 +2,7 @@
 // with the chat and message already filled in. The owner only presses "send".
 
 /**
- * Link that opens a chat with `phone` (E.164, e.g. "+31612345678") and a prepared message.
+ * Link that opens a chat with `phone` (E.164, e.g. "+905321234567") and a prepared message.
  * wa.me wants the number as digits only, without "+" or spaces.
  */
 export function buildWhatsAppUrl(phone: string, message: string): string {

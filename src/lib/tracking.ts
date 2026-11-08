@@ -4,7 +4,7 @@ import { getPathname } from "@/i18n/navigation";
 import type { Locale } from "@/i18n/routing";
 
 /**
- * Base URL of the site, e.g. "https://kledingreparatie-mustan.nl".
+ * Base URL of the site, e.g. "https://example.com".
  * Uses SITE_URL when set (production). Otherwise the address the admin page was
  * opened with, so a QR made on http://192.168.1.15:3000 also works on a phone in the shop.
  */
@@ -17,7 +17,7 @@ async function getSiteUrl(): Promise<string> {
   return `${protocol}://${host}`;
 }
 
-/** Full tracking link in the customer's language, e.g. ".../tr/track/<token>". */
+/** Full tracking link in the customer's language, e.g. ".../track/<token>". */
 export async function getTrackingUrl(token: string, locale: Locale): Promise<string> {
   const path = getPathname({ href: `/track/${token}`, locale });
   return `${await getSiteUrl()}${path}`;

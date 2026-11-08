@@ -5,7 +5,6 @@ import { getLocale, getTranslations, setRequestLocale } from "next-intl/server";
 import { SiteFooter } from "@/components/public/SiteFooter";
 import { SiteHeader } from "@/components/public/SiteHeader";
 import { PageIntro } from "@/components/public/PageIntro";
-import { ButtonLink } from "@/components/ui/ButtonLink";
 import { getClientMessages, PUBLIC_CLIENT_NAMESPACES } from "@/i18n/client-messages";
 import { NOT_FOUND_LOCALE_HEADER, parseNotFoundLocale } from "@/i18n/not-found-locale";
 import { fontVariables } from "./fonts";
@@ -29,7 +28,6 @@ export default async function GlobalNotFound() {
   if (headerLocale) setRequestLocale(headerLocale);
   const locale = await getLocale();
   const t = await getTranslations("NotFound");
-  const tCommon = await getTranslations("Common");
 
   return (
     <html lang={locale} className={`${fontVariables} h-full antialiased`}>
@@ -38,7 +36,6 @@ export default async function GlobalNotFound() {
           <SiteHeader />
           <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-16">
             <PageIntro title={t("title")} intro={t("text")} />
-            <ButtonLink href="/">{tCommon("backHome")}</ButtonLink>
           </main>
           <SiteFooter />
         </NextIntlClientProvider>

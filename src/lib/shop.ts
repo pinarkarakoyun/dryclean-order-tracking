@@ -1,6 +1,5 @@
-// Business information shown on the public site.
-// Address and phone come from the current website (kledingreparatie-mustan.nl).
-// TODO (owner): confirm WhatsApp number, opening hours and the social media links.
+// Business information shown on the tracking pages, receipts and WhatsApp messages.
+// TODO (owner): replace every [PLACEHOLDER], confirm opening hours and the social media links.
 
 export type Weekday = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
 
@@ -11,22 +10,21 @@ export type OpeningHours = {
 };
 
 export const shop = {
-  name: "Mustan",
-  /** Shown under the name, like on the shop sign and the current website. */
-  tagline: "Kledingreparatie & Stomerij",
-  fullName: "Mustan Kledingreparatie & Stomerij",
-  yearsOfExperience: 25,
+  name: "[DÜKKÂN ADI]",
+  /** Shown under the name. */
+  tagline: "[SLOGAN]",
+  fullName: "[DÜKKÂN TAM ADI]",
   address: {
-    street: "Nieuwe Ebbingestraat 54",
-    postalCode: "9712 NM",
-    city: "Groningen",
+    street: "[ADRES]",
+    postalCode: "[POSTA KODU]",
+    city: "[ŞEHİR]",
   },
   /** Phone as shown to visitors. */
-  phoneDisplay: "050 313 0801",
+  phoneDisplay: "[TELEFON]",
   /** Phone in international format, used for tel: links. */
-  phone: "+31503130801",
-  /** WhatsApp number in international format. DEMO VALUE until the owner confirms it. */
-  whatsapp: "+31612345678",
+  phone: "[TELEFON]",
+  /** WhatsApp number in international format. */
+  whatsapp: "[WHATSAPP]",
   /** Social media pages. Placeholders until the owner sends the real links. */
   social: {
     facebook: "https://www.facebook.com/",

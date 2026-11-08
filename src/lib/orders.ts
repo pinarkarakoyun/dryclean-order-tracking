@@ -15,14 +15,14 @@ type Store = {
 };
 
 // Kept on globalThis so it survives hot reloads in development.
-const globalForStore = globalThis as unknown as { mustanStore?: Store };
+const globalForStore = globalThis as unknown as { dcStore?: Store };
 
 async function getStore(): Promise<Store> {
   // Mock data can change at any time, so tell Next.js to read it on every
   // request instead of baking it into a pre-rendered page.
   await connection();
-  globalForStore.mustanStore ??= createSeedData(new Date());
-  return globalForStore.mustanStore;
+  globalForStore.dcStore ??= createSeedData(new Date());
+  return globalForStore.dcStore;
 }
 
 /** All orders, newest first. Returns copies, like a database would. */
@@ -46,7 +46,7 @@ export async function searchOrders({
 }: OrderSearch): Promise<Order[]> {
   const orders = await listOrders();
   const text = normalizeText(query.trim());
-  // "06 1234 0005", "+31612340005" and "0612340005" should all find the same phone.
+  // "0532 123 45 67", "+905321234567" and "05321234567" should all find the same phone.
   const digits = query.replace(/\D/g, "").replace(/^0+/, "");
 
   return orders.filter((order) => {

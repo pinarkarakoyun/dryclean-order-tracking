@@ -25,7 +25,7 @@ export function validatePhone(input: string): Result<string, "phoneRequired" | "
   return phone ? { value: phone } : { error: "phoneInvalid" };
 }
 
-/** Unknown values fall back to Dutch instead of failing: it is not worth an error message. */
+/** Unknown values fall back to the default language instead of failing: it is not worth an error message. */
 export function parseLanguage(input: string): Locale {
   return hasLocale(routing.locales, input) ? input : routing.defaultLocale;
 }
@@ -41,7 +41,7 @@ export function validateOptionalText(
 
 /**
  * Optional price in euros, e.g. "15", "15,50", "15.50" or "€ 15,50" -> cents (1550).
- * Thousand separators are not accepted, to avoid confusing "1.500" (Dutch) with 1.5.
+ * Thousand separators are not accepted, to avoid confusing "1.500" (Turkish) with 1.5.
  */
 export function parsePriceToCents(input: string): Result<number | null, "priceInvalid"> {
   const cleaned = input.replace(/€/g, "").replace(/\s/g, "");

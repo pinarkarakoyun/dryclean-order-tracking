@@ -5,7 +5,7 @@
 // The signature is an HMAC of the expiry time with AUTH_SECRET. Without the secret
 // nobody can create a valid token, and changing the expiry breaks the signature.
 
-export const SESSION_COOKIE = "mustan_admin_session";
+export const SESSION_COOKIE = "dc_admin_session";
 export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30; // 30 days: the shop device stays logged in
 
 const encoder = new TextEncoder();

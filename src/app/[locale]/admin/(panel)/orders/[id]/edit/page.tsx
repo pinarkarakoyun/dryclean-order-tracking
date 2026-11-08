@@ -43,7 +43,7 @@ export default async function EditOrderPage({
           clothingType: order.clothingType ?? "",
           publicDescription: order.publicDescription ?? "",
           internalNote: order.internalNote ?? "",
-          price: order.priceCents === null ? "" : formatPriceInput(order.priceCents, locale),
+          price: order.priceCents === null ? "" : formatPriceInput(order.priceCents),
           estimatedReadyDate: order.estimatedReadyDate ?? "",
         }}
       />
@@ -51,8 +51,7 @@ export default async function EditOrderPage({
   );
 }
 
-/** 1550 -> "15,50" (or "15.50" in English), the way people type prices. */
-function formatPriceInput(cents: number, locale: string): string {
-  const euros = (cents / 100).toFixed(2);
-  return locale === "en" ? euros : euros.replace(".", ",");
+/** 1550 -> "15,50", the way people type prices. */
+function formatPriceInput(cents: number): string {
+  return (cents / 100).toFixed(2).replace(".", ",");
 }

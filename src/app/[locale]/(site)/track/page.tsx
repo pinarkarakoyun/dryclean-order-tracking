@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { PageIntro } from "@/components/public/PageIntro";
-import { ButtonLink } from "@/components/ui/ButtonLink";
+import { ExternalButtonLink } from "@/components/ui/ButtonLink";
 import { initPageLocale } from "@/i18n/page-locale";
+import { shop } from "@/lib/shop";
 
 export async function generateMetadata({
   params,
@@ -19,7 +20,7 @@ export default async function TrackInfoPage({
 }: PageProps<"/[locale]/track">) {
   await initPageLocale(params);
   const t = await getTranslations("Track");
-  const tNav = await getTranslations("Nav");
+  const tCommon = await getTranslations("Common");
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-16">
@@ -29,9 +30,9 @@ export default async function TrackInfoPage({
         <li>{t("optionLink")}</li>
       </ol>
       <p className="mb-6 text-muted">{t("noCode")}</p>
-      <ButtonLink href="/contact" variant="secondary">
-        {tNav("contact")}
-      </ButtonLink>
+      <ExternalButtonLink href={`tel:${shop.phone}`} variant="secondary">
+        {tCommon("callUs")}
+      </ExternalButtonLink>
     </div>
   );
 }

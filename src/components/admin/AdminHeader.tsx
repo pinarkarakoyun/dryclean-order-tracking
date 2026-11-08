@@ -1,7 +1,6 @@
 import { useTranslations } from "next-intl";
 import { logout } from "@/app/[locale]/admin/actions";
 import { ShopLogo } from "@/components/public/ShopLogo";
-import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import { NavLink } from "@/components/ui/NavLink";
 import { Link } from "@/i18n/navigation";
 
@@ -18,7 +17,6 @@ export function AdminHeader() {
               {t("panelName")}
             </span>
           </Link>
-          <LanguageSwitcher />
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-2">

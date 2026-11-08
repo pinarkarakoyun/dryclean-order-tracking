@@ -4,10 +4,14 @@ import createNextIntlPlugin from "next-intl/plugin";
 const nextConfig: NextConfig = {
   /* config options here */
   cacheComponents: true,
-  // Off on purpose: with Dutch URLs without a language prefix (/track), partial
+  // Off on purpose: with default-language URLs without a prefix (/track), partial
   // prefetching matched /track to the /[locale] route, got a 404 and retried in an
   // endless loop (thousands of requests). The classic prefetching works correctly.
   partialPrefetching: false,
+  // No public home page for now. Temporary on purpose: browsers cache permanent redirects.
+  redirects() {
+    return [{ source: "/", destination: "/admin/login", permanent: false }];
+  },
   experimental: {
     // Our root layout lives in app/[locale], so unmatched URLs need a
     // standalone 404 page (src/app/global-not-found.tsx).

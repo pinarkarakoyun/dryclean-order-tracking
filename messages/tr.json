@@ -1,91 +1,20 @@
 {
   "Metadata": {
-    "description": "Elbise tamiri ve tadilat atölyesi. Kıyafetlerinizi kısaltır, tadil eder ve tamir ederiz.",
+    "description": "Kuru temizleme dükkânı. Kıyafetlerinizi özenle temizler ve ütüleriz.",
     "descriptionTracking": "Siparişinizi online takip edin."
-  },
-  "Nav": {
-    "home": "Ana sayfa",
-    "services": "Hizmetler",
-    "howItWorks": "Nasıl çalışır",
-    "contact": "İletişim",
-    "mainMenu": "Ana menü"
-  },
-  "LanguageSwitcher": {
-    "label": "Dil seçin"
   },
   "Common": {
     "whatsappUs": "WhatsApp'tan yazın",
-    "callUs": "Bizi arayın",
-    "priceFrom": "Başlangıç fiyatı: {price}",
-    "priceOnRequest": "Fiyat dükkânda",
-    "backHome": "Ana sayfaya dön"
+    "callUs": "Bizi arayın"
   },
   "Footer": {
-    "privacy": "Gizlilik",
-    "visit": "Adresimiz",
-    "menu": "Menü"
-  },
-  "Home": {
-    "title": "Kıyafetleriniz usta ellerde",
-    "intro": "Pantolonunuz uzun mu, fermuarınız mı bozuk, ceketiniz tam oturmuyor mu? Getirin; hızlı, özenli ve uygun fiyata halledelim.",
-    "servicesTitle": "Hizmetlerimiz",
-    "allServices": "Tüm hizmetleri görün",
-    "howItWorksTitle": "Nasıl çalışır",
-    "visitTitle": "Dükkânımızı ziyaret edin",
-    "allContactInfo": "Tüm iletişim bilgileri",
-    "heroEyebrow": "Groningen'in kalbinde terzi",
-    "highlight1Title": "{years} yıllık deneyim",
-    "highlight1Text": "Güvenebileceğiniz ustalık.",
-    "highlight2Title": "Uygun fiyatlar",
-    "highlight2Text": "Uygun fiyata kaliteli hizmet.",
-    "highlight3Title": "Siparişinizi takip edin",
-    "highlight3Text": "Kıyafetinizin ne zaman hazır olacağını online görün.",
-    "servicesEyebrow": "Neler yapıyoruz",
-    "aboutEyebrow": "Hakkımızda",
-    "aboutTitle": "Kaliteli hizmet, uygun fiyat",
-    "aboutText": "{years} yıldır Groningen'in merkezinde kıyafet tamiri ve tadilatı yapıyoruz. Paça kısaltmadan kaz tüyü mont tamirine kadar her kıyafet hak ettiği özeni görür.",
-    "howItWorksEyebrow": "Çok kolay",
-    "partnersEyebrow": "Bize güvenenler",
-    "partnersTitle": "İş ortaklarımız",
-    "partnersText": "Bu mağazaların tadilat işlerini biz yapıyoruz.",
-    "visitEyebrow": "Bize uğrayın",
-    "experienceLabel": "yıllık deneyim"
-  },
-  "Services": {
-    "title": "Hizmetler",
-    "intro": "Her türlü kıyafet tamiri ve tadilatı yapıyoruz. Fiyat, kıyafete ve yapılacak işe göre değişir.",
-    "otherTitle": "Aradığınız iş listede yok mu?",
-    "otherText": "Dükkâna uğrayın veya WhatsApp'tan yazın. Neler yapabileceğimize birlikte bakalım.",
-    "eyebrow": "Neler yapıyoruz"
-  },
-  "HowItWorks": {
-    "title": "Nasıl çalışır",
-    "intro": "Hiçbir şey yüklemenize veya hesap açmanıza gerek yok.",
-    "step1Title": "Kıyafetinizi getirin",
-    "step1Text": "Dükkâna gelin ve ne yapılması gerektiğini anlatın.",
-    "step2Title": "Siparişinizi kaydederiz",
-    "step2Text": "Size sipariş numarası ve QR kod olan bir fiş veririz.",
-    "step3Title": "Online takip edin",
-    "step3Text": "Durumu görmek için QR kodu telefonunuzla okutun. Bu zorunlu değildir.",
-    "step4Title": "Teslim alın",
-    "step4Text": "Hazır olduğunda size WhatsApp mesajı göndeririz. Dükkândan teslim alabilirsiniz.",
-    "eyebrow": "Nasıl çalışır",
-    "introSimple": "Üç kolay adımda.",
-    "simpleStep2Text": "Size sipariş numaralı bir fiş veririz.",
-    "simpleStep3Title": "Hazır olunca teslim alın",
-    "simpleStep3Text": "Kıyafetiniz hazır olduğunda size haber veririz. Dükkândan teslim alabilirsiniz."
+    "visit": "Adresimiz"
   },
   "Contact": {
-    "title": "İletişim",
-    "address": "Adres",
     "openInMaps": "Google Haritalar'da aç",
-    "phone": "Telefon",
-    "whatsapp": "WhatsApp",
     "openingHours": "Çalışma saatleri",
     "closed": "Kapalı",
-    "hoursRange": "{open} – {close}",
-    "eyebrow": "Bize uğrayın",
-    "intro": "Dükkânımıza her zaman bekleriz. Arayın, WhatsApp'tan yazın veya bizi sosyal medyada bulun."
+    "hoursRange": "{open} – {close}"
   },
   "Days": {
     "mon": "Pazartesi",
@@ -97,7 +26,6 @@
     "sun": "Pazar"
   },
   "Track": {
-    "cta": "Siparişinizi takip edin",
     "title": "Siparişinizi takip edin",
     "intro": "Siparişinizi iki şekilde takip edebilirsiniz:",
     "optionQr": "Fişinizdeki QR kodu telefonunuzun kamerasıyla okutun.",
@@ -105,30 +33,9 @@
     "noCode": "Fişiniz veya linkiniz yok mu? Bize ulaşın, yardımcı olalım.",
     "eyebrow": "Siparişiniz"
   },
-  "Privacy": {
-    "title": "Gizlilik",
-    "intro": "Bilgilerinizi özenle korur, sadece gerekli olanları toplarız.",
-    "collectTitle": "Hangi bilgileri saklıyoruz?",
-    "collectText": "Adınız, telefon numaranız ve siparişinizle ilgili bilgiler (yapılacak iş, fiyat ve tarih gibi).",
-    "purposeTitle": "Neden?",
-    "purposeText": "Siparişinizi hazırlamak ve kıyafetiniz hazır olduğunda size haber vermek için. Bilgilerinizi kimseyle paylaşmayız ve reklam için kullanmayız.",
-    "trackingTitle": "Takip sayfası",
-    "trackingText": "Fişinizdeki link size özeldir ve tahmin edilmesi zordur. Takip sayfasında sadece adınız, sipariş numaranız ve durum görünür. Telefon numaranız orada asla görünmez.",
-    "rightsTitle": "Haklarınız",
-    "rightsText": "Hakkınızda hangi bilgileri sakladığımızı her zaman sorabilir, düzeltilmesini veya silinmesini isteyebilirsiniz. Bunun için bize ulaşın.",
-    "introSimple": "Bilgilerinizi özenle koruruz. Bu sitede hiçbir şey doldurmanız gerekmez.",
-    "simpleDataTitle": "Hangi bilgiler?",
-    "simpleDataText": "Bu site sizden kişisel bilgi istemez. Form yoktur ve hesap açmanız gerekmez.",
-    "simpleCookiesTitle": "Çerezler",
-    "simpleCookiesText": "Bu site çerez kullanmaz.",
-    "simpleLinksTitle": "Başka sitelere bağlantılar",
-    "simpleLinksText": "WhatsApp, Facebook, Instagram ve Google Haritalar butonları başka bir site veya uygulama açar. Orada o şirketin gizlilik kuralları geçerlidir.",
-    "simpleContactTitle": "Bize ulaşmak",
-    "simpleContactText": "Bizi ararsanız veya WhatsApp'tan yazarsanız bilgilerinizi sadece size yardım etmek için kullanırız. Bu bilgilerin silinmesini her zaman isteyebilirsiniz."
-  },
   "NotFound": {
     "title": "Sayfa bulunamadı",
-    "text": "Bu sayfa mevcut değil. Linki kontrol edin veya ana sayfaya dönün."
+    "text": "Bu sayfa mevcut değil. Linki kontrol edin veya dükkânla iletişime geçin."
   },
   "Status": {
     "RECEIVED": "Alındı",
@@ -234,7 +141,7 @@
     "intro": "Sadece isim ve telefon numarası gerekli. Gerisini sonra doldurabilirsiniz.",
     "name": "Müşterinin adı",
     "phone": "Telefon numarası",
-    "phoneHint": "Örneğin 06 12345678 veya 0532 123 45 67",
+    "phoneHint": "Örneğin 0532 123 45 67. Yurt dışı numaraları + ile başlamalı.",
     "language": "Müşteriye gidecek mesajların dili",
     "submit": "Siparişi oluştur",
     "submitting": "Kaydediliyor…",
@@ -258,9 +165,9 @@
     "clothingType": "Kıyafet",
     "clothingTypeHint": "Örneğin pantolon, ceket veya elbise.",
     "publicDescription": "Müşteri için açıklama",
-    "publicDescriptionHint": "Müşterinin takip sayfasında göreceği kısa metin, örneğin \"Paça kısaltma\".",
+    "publicDescriptionHint": "Müşterinin takip sayfasında göreceği kısa metin, örneğin \"Takım elbise temizliği\".",
     "internalNote": "İç not",
-    "internalNoteHint": "Sadece dükkân için: ölçüler, anlaşmalar. Müşteri bunu asla görmez.",
+    "internalNoteHint": "Sadece dükkân için: leke bilgisi, anlaşmalar. Müşteri bunu asla görmez.",
     "price": "Fiyat (euro)",
     "priceHint": "Örneğin 15 veya 15,50.",
     "estimatedReadyDate": "Teslim tarihi",
@@ -277,8 +184,8 @@
     "orderNumber": "Sipariş #{number}",
     "greeting": "Merhaba {name},",
     "currentStatus": "Durum",
-    "RECEIVED": "Kıyafetinizi teslim aldık. Yakında üzerinde çalışmaya başlayacağız.",
-    "IN_PROGRESS": "Kıyafetiniz üzerinde çalışıyoruz.",
+    "RECEIVED": "Kıyafetinizi teslim aldık. Yakında temizliğine başlayacağız.",
+    "IN_PROGRESS": "Kıyafetinizi temizliyoruz.",
     "READY_FOR_PICKUP": "Kıyafetiniz hazır! Dükkândan teslim alabilirsiniz.",
     "DELIVERED": "Kıyafetinizi teslim aldınız. Teşekkür ederiz!",
     "CANCELLED": "Bu sipariş iptal edildi. Sorunuz varsa bize ulaşın.",
