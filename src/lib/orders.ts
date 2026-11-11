@@ -133,6 +133,25 @@ export async function listOrders(): Promise<OrderWithDetails[]> {
   return rows.map(toOrderWithDetails);
 }
 
+/** One customer's orders with customer and items, newest first. Empty for a malformed id. */
+export async function listOrdersForCustomer(customerId: string): Promise<OrderWithDetails[]> {
+  await connection();
+  if (!isUuid(customerId)) return [];
+  const rows = await collectAllPages(async (from, to) => {
+    const { data, error } = await getDb()
+      .from("orders")
+      .select(DETAILS)
+      .eq("customer_id", customerId)
+      .order("created_at", { ascending: false })
+      .order("id")
+      .range(from, to)
+      .returns<OrderDetailsRow[]>();
+    if (error) fail("orders", error.message);
+    return data;
+  });
+  return rows.map(toOrderWithDetails);
+}
+
 export type OrderSearch = {
   /** Free text: customer name, phone number, order number or tag number ("1048-1"). */
   query?: string;
