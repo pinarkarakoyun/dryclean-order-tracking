@@ -102,6 +102,7 @@ export default async function OrderDetailPage({ params, searchParams }: Props) {
             priceList={priceList.map((entry) => ({
               id: entry.id,
               label: `${entry.name} · ${format.number(entry.priceKurus / 100, "price")}`,
+              priceKurus: entry.priceKurus,
             }))}
           />
         </div>

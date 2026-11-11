@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, type ReactNode } from "react";
+import { useActionState, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import {
   addItemAction,
@@ -9,25 +9,37 @@ import {
 } from "@/app/[locale]/admin/(panel)/orders/[id]/actions";
 import { Input } from "@/components/ui/Input";
 import { SubmitButton } from "@/components/ui/SubmitButton";
-import { LIMITS } from "@/lib/order-limits";
+import { LIMITS, QUICK_PRICES_KURUS } from "@/lib/order-limits";
 
 type AddItemFormProps = {
   orderId: string;
-  /** Active price list items, with the price already formatted for display. */
-  priceList: { id: string; label: string }[];
+  /** Active price list items: label with the formatted price, and the price for the price box. */
+  priceList: { id: string; label: string; priceKurus: number }[];
 };
+
+/** 12000 -> "120", 15050 -> "150,50": the way people type prices. */
+function toPriceInput(kurus: number): string {
+  return kurus % 100 === 0 ? String(kurus / 100) : (kurus / 100).toFixed(2).replace(".", ",");
+}
 
 const initialState: AddItemState = {
   errors: {},
   values: { priceListItemId: "", customName: "", price: "", rack: "", note: "" },
 };
 
-/** Adds one garment: pick it from the price list, or type its name (and price) by hand. */
+/** Adds one garment: pick it from the price list or type its name; the price is always editable. */
 export function AddItemForm({ orderId, priceList }: AddItemFormProps) {
   const t = useTranslations("AddItem");
   const [state, formAction] = useActionState(addItemAction, initialState);
   const { errors, values } = state;
+  // The price box is controlled: picking a list item or a quick price fills it, and it stays editable.
+  const [price, setPrice] = useState(values.price);
   const errorText = (key: AddItemErrorKey | undefined) => (key ? t(key) : undefined);
+
+  const onPickListItem = (id: string) => {
+    const entry = priceList.find((candidate) => candidate.id === id);
+    setPrice(entry ? toPriceInput(entry.priceKurus) : "");
+  };
 
   return (
     // noValidate: the server checks the input and shows clear, translated messages.
@@ -39,6 +51,7 @@ export function AddItemForm({ orderId, priceList }: AddItemFormProps) {
           id="priceListItemId"
           name="priceListItemId"
           defaultValue={values.priceListItemId}
+          onChange={(event) => onPickListItem(event.target.value)}
           className="min-h-14 w-full rounded-xl border-2 border-border bg-surface px-3 text-lg"
         >
           <option value="">{t("fromListNone")}</option>
@@ -67,10 +80,31 @@ export function AddItemForm({ orderId, priceList }: AddItemFormProps) {
           inputMode="decimal"
           autoComplete="off"
           maxLength={10}
-          defaultValue={values.price}
+          value={price}
+          onChange={(event) => setPrice(event.target.value)}
           className="max-w-48"
         />
       </Field>
+
+      <fieldset className="-mt-2 flex flex-col gap-2">
+        <legend className="mb-2 font-semibold">{t("quickPrices")}</legend>
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+          {QUICK_PRICES_KURUS.map((kurus) => {
+            const text = toPriceInput(kurus);
+            return (
+              <button
+                key={kurus}
+                type="button"
+                onClick={() => setPrice(text)}
+                aria-pressed={price === text}
+                className="min-h-14 rounded-xl border-2 border-border bg-surface text-lg font-semibold hover:border-primary aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground"
+              >
+                {text} ₺
+              </button>
+            );
+          })}
+        </div>
+      </fieldset>
 
       <Field id="rack" label={t("rack")} error={errorText(errors.rack)}>
         <Input

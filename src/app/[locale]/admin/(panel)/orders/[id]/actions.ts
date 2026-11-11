@@ -6,8 +6,8 @@ import { requireAdmin } from "@/lib/auth";
 import { canQuickChange } from "@/lib/item-status";
 import { LIMITS } from "@/lib/order-limits";
 import {
-  parsePriceToCents,
   readText,
+  resolveItemPrice,
   validateOptionalText,
 } from "@/lib/order-validation";
 import { addOrderItem, changeItemStatus } from "@/lib/orders";
@@ -80,17 +80,17 @@ export async function addItemAction(
   const errors: AddItemState["errors"] = { rack: rack.error, note: note.error };
 
   let garmentName: string | null = null;
-  let unitPriceKurus: number | null = null;
+  let listPriceKurus: number | null = null;
   let priceListItemId: string | null = null;
 
   if (values.priceListItemId) {
-    // Name and price come from the database, never from the form.
+    // The name and the default price come from the database, not from the form.
     const listItem = await getPriceListItem(values.priceListItemId);
     if (!listItem || !listItem.isActive) {
       errors.item = "itemInvalid";
     } else {
       garmentName = listItem.name;
-      unitPriceKurus = listItem.priceKurus;
+      listPriceKurus = listItem.priceKurus;
       priceListItemId = listItem.id;
     }
   } else if (!values.customName) {
@@ -99,10 +99,12 @@ export async function addItemAction(
     errors.item = "tooLong";
   } else {
     garmentName = values.customName;
-    const price = parsePriceToCents(values.price);
-    if (price.error) errors.price = price.error;
-    else unitPriceKurus = price.value;
   }
+
+  // The same garment type is not always the same price: a typed price wins over the list price.
+  const price = resolveItemPrice(values.price, listPriceKurus);
+  if (price.error) errors.price = price.error;
+  const unitPriceKurus = price.value ?? null;
 
   if (Object.values(errors).some(Boolean) || garmentName === null) {
     return { errors, values };

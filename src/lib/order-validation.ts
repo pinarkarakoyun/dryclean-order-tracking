@@ -48,6 +48,19 @@ export function parsePriceToCents(input: string): Result<number | null, "priceIn
   return { value: Math.round(lira * 100) };
 }
 
+/**
+ * Price of a new order item. A typed price always wins (the same garment type is not
+ * always the same price); an empty box falls back to the price list item, if one was chosen.
+ */
+export function resolveItemPrice(
+  typed: string,
+  listPriceKurus: number | null,
+): Result<number | null, "priceInvalid"> {
+  const price = parsePriceToCents(typed);
+  if (price.error) return price;
+  return { value: price.value ?? listPriceKurus };
+}
+
 /** The "express" checkbox: ticked sends "on". Returns the surcharge to copy onto the order. */
 export function validateExpress(input: string): number | null {
   return input === "on" ? EXPRESS_PERCENT : null;
