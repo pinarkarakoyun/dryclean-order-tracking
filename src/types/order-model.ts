@@ -87,6 +87,12 @@ export type Product = {
   isActive: boolean;
 };
 
+/** One quick price button of the item form, in kuruş. */
+export type QuickPrice = {
+  id: string;
+  amountKurus: number;
+};
+
 export type OrderWithDetails = Order & { customer: Customer; items: OrderItem[] };
 
 /** The order status, derived from its items (see deriveOrderStatus). */
