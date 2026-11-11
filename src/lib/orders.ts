@@ -13,6 +13,7 @@ import { getDb } from "./db";
 import { isUuid } from "./ids";
 import { customerTimeline, deriveOrderStatus, parseTagLabel, tagLabel } from "./order-calc";
 import { collectAllPages } from "./paging";
+import { normalizeSearchText, phoneSearchDigits } from "./text-search";
 import { generateTrackingToken } from "./token";
 
 // THE single place for order data access (Supabase/PostgreSQL).
@@ -142,10 +143,10 @@ export type OrderSearch = {
 /** Orders matching the search, newest first. Filtered in memory: fine for one shop's volume. */
 export async function searchOrders({ query = "", status }: OrderSearch): Promise<OrderWithDetails[]> {
   const orders = await listOrders();
-  const text = normalizeText(query.trim());
+  const text = normalizeSearchText(query.trim());
   const tag = parseTagLabel(query);
   // "0532 123 45 67", "+905321234567" and "05321234567" should all find the same phone.
-  const digits = query.replace(/\D/g, "").replace(/^0+/, "");
+  const digits = phoneSearchDigits(query);
 
   return orders.filter((order) => {
     if (status && deriveOrderStatus(order.items).status !== status) return false;
@@ -157,20 +158,11 @@ export async function searchOrders({ query = "", status }: OrderSearch): Promise
       );
     }
     return (
-      normalizeText(order.customer.name).includes(text) ||
+      normalizeSearchText(order.customer.name).includes(text) ||
       (digits.length > 0 && String(order.orderNumber).includes(digits)) ||
       (digits.length >= 4 && order.customer.phone.replace(/\D/g, "").includes(digits))
     );
   });
-}
-
-/** Lowercase without accents, so "yilmaz" finds "Yılmaz" and "celik" finds "Çelik". */
-function normalizeText(value: string): string {
-  return value
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .replace(/ı/g, "i");
 }
 
 /** One order with customer, items and their status history (oldest first), or null. */
