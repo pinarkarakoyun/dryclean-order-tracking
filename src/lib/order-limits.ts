@@ -8,6 +8,7 @@ export const LIMITS = {
   garmentName: 60,
   rackLocation: 20,
   itemNote: 300,
+  preferenceNote: 300,
   /** Highest accepted price in Turkish lira. */
   priceLira: 100_000,
 } as const;
