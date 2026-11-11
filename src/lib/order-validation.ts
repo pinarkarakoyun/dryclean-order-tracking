@@ -67,16 +67,11 @@ export function resolveItemSource(
 }
 
 /**
- * Price of a new order item. A typed price always wins (the same garment type is not
- * always the same price); an empty box falls back to the price list item, if one was chosen.
+ * Price of a new order item. It only comes from the price box: the same garment type is not
+ * always the same price, so products have no price. An empty box means "no price yet".
  */
-export function resolveItemPrice(
-  typed: string,
-  listPriceKurus: number | null,
-): Result<number | null, "priceInvalid"> {
-  const price = parsePriceToCents(typed);
-  if (price.error) return price;
-  return { value: price.value ?? listPriceKurus };
+export function resolveItemPrice(typed: string): Result<number | null, "priceInvalid"> {
+  return parsePriceToCents(typed);
 }
 
 /**

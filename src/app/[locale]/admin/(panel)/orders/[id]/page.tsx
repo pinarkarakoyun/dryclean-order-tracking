@@ -23,7 +23,7 @@ import {
 } from "@/lib/order-utils";
 import { getOrderDetail } from "@/lib/orders";
 import { formatPhone } from "@/lib/phone";
-import { listActivePriceListItems } from "@/lib/price-list";
+import { listProducts } from "@/lib/products";
 import type { ItemStatusEvent, OrderItem } from "@/types/order-model";
 
 type Props = PageProps<"/[locale]/admin/orders/[id]">;
@@ -48,7 +48,9 @@ export default async function OrderDetailPage({ params, searchParams }: Props) {
   const undo = notice === "status" ? undoOffer(order.items, events, changed) : null;
   const tAddItem = await getTranslations("AddItem");
   const format = await getFormatter();
-  const priceList = await listActivePriceListItems();
+  const products = (await listProducts())
+    .filter((product) => product.isActive)
+    .sort((a, b) => a.name.localeCompare(b.name, "tr"));
   const summary = deriveOrderStatus(order.items);
   const total = calculateOrderTotal(order.items, order.expressPercent);
   const missing = getMissingFields(order);
@@ -119,11 +121,7 @@ export default async function OrderDetailPage({ params, searchParams }: Props) {
           <AddItemForm
             key={order.items.length}
             orderId={order.id}
-            priceList={priceList.map((entry) => ({
-              id: entry.id,
-              label: `${entry.name} · ${format.number(entry.priceKurus / 100, "price")}`,
-              priceKurus: entry.priceKurus,
-            }))}
+            products={products.map(({ id, name }) => ({ id, name }))}
           />
         </div>
       </details>

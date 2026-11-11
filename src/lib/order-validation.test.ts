@@ -35,21 +35,18 @@ test("price input to kurus", () => {
   assert.deepEqual(parsePriceToCents("1.500"), { error: "priceInvalid" });
 });
 
-// The same garment type is not always the same price: a typed price wins over the list price.
-test("typed price wins over the list price", () => {
-  assert.deepEqual(resolveItemPrice("150", 12000), { value: 15000 });
+// The price only comes from the price box: products have no price of their own.
+test("typed price is used as the item price", () => {
+  assert.deepEqual(resolveItemPrice("150"), { value: 15000 });
+  assert.deepEqual(resolveItemPrice("150,50"), { value: 15050 });
 });
 
-test("empty price falls back to the list price", () => {
-  assert.deepEqual(resolveItemPrice("", 12000), { value: 12000 });
+test("empty price stays empty", () => {
+  assert.deepEqual(resolveItemPrice(""), { value: null });
 });
 
-test("empty price without a list item stays empty", () => {
-  assert.deepEqual(resolveItemPrice("", null), { value: null });
-});
-
-test("invalid typed price is an error, even with a list price", () => {
-  assert.deepEqual(resolveItemPrice("abc", 12000), { error: "priceInvalid" });
+test("invalid typed price is an error", () => {
+  assert.deepEqual(resolveItemPrice("abc"), { error: "priceInvalid" });
 });
 
 test("express checkbox", () => {

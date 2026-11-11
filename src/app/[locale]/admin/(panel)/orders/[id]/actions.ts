@@ -13,7 +13,7 @@ import {
   validateOptionalText,
 } from "@/lib/order-validation";
 import { addOrderItem, changeItemStatus, getItemForStatusChange } from "@/lib/orders";
-import { getPriceListItem } from "@/lib/price-list";
+import { getProduct } from "@/lib/products";
 import { ITEM_STATUSES, type ItemStatus } from "@/types/order-model";
 
 /** Reads the fields every status form sends, and checks the item belongs to the order on screen. */
@@ -137,28 +137,26 @@ export async function addItemAction(
   const errors: AddItemState["errors"] = { rack: rack.error, note: note.error };
 
   let garmentName: string | null = null;
-  let listPriceKurus: number | null = null;
   let priceListItemId: string | null = null;
 
   const source = resolveItemSource(values.priceListItemId, values.customName);
   if (source.error) {
     errors.item = source.error;
   } else if (source.value.kind === "list") {
-    // The name and the default price come from the database, not from the form.
-    const listItem = await getPriceListItem(source.value.id);
-    if (!listItem || !listItem.isActive) {
+    // The name comes from the database, not from the form. A hidden product is refused.
+    const product = await getProduct(source.value.id);
+    if (!product || !product.isActive) {
       errors.item = "itemInvalid";
     } else {
-      garmentName = listItem.name;
-      listPriceKurus = listItem.priceKurus;
-      priceListItemId = listItem.id;
+      garmentName = product.name;
+      priceListItemId = product.id;
     }
   } else {
     garmentName = source.value.name;
   }
 
-  // The same garment type is not always the same price: a typed price wins over the list price.
-  const price = resolveItemPrice(values.price, listPriceKurus);
+  // The price only comes from the price box (products have no price of their own).
+  const price = resolveItemPrice(values.price);
   if (price.error) errors.price = price.error;
   const unitPriceKurus = price.value ?? null;
 

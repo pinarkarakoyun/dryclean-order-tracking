@@ -278,7 +278,7 @@
     "customName": "Ya da parçanın adını yazın",
     "customNameHint": "Listede yoksa, örneğin \"Halı\".",
     "price": "Fiyat (₺)",
-    "priceHint": "Ürünü seçince liste fiyatı gelir; bu parçanın fiyatı farklıysa değiştirin.",
+    "priceHint": "Butona dokunun ya da tutarı yazın. Bilmiyorsanız boş bırakın.",
     "quickPrices": "Sık kullanılan fiyatlar",
     "rack": "Askı/raf (isteğe bağlı)",
     "note": "Not (isteğe bağlı)",
@@ -287,7 +287,7 @@
     "submitting": "Ekleniyor…",
     "nameRequired": "Listeden bir parça seçin veya adını yazın.",
     "bothGiven": "Ya listeden seçin ya da adını yazın, ikisini birden değil.",
-    "itemInvalid": "Listeden geçerli bir parça seçin.",
+    "itemInvalid": "Bu ürün artık listede yok. Başka bir ürün seçin veya adını yazın.",
     "tooLong": "Bu metin çok uzun.",
     "priceInvalid": "Geçerli bir tutar girin, örneğin 150 veya 150,50."
   }

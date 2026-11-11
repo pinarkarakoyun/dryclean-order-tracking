@@ -80,12 +80,11 @@ export type ItemStatusEvent = {
   changedAt: string;
 };
 
-export type PriceListItem = {
+/** A garment type to pick when adding an item. Hidden products have isActive false. */
+export type Product = {
   id: string;
   name: string;
-  priceKurus: number;
   isActive: boolean;
-  sortOrder: number;
 };
 
 export type OrderWithDetails = Order & { customer: Customer; items: OrderItem[] };

@@ -13,8 +13,8 @@ import { LIMITS, QUICK_PRICES_KURUS } from "@/lib/order-limits";
 
 type AddItemFormProps = {
   orderId: string;
-  /** Active price list items: label with the formatted price, and the price for the price box. */
-  priceList: { id: string; label: string; priceKurus: number }[];
+  /** Visible products, alphabetical. Picking one fills only the name, never the price. */
+  products: { id: string; name: string }[];
 };
 
 /** 12000 -> "120", 15050 -> "150,50": the way people type prices. */
@@ -27,31 +27,26 @@ const initialState: AddItemState = {
   values: { priceListItemId: "", customName: "", price: "", rack: "", note: "" },
 };
 
-/** Adds one garment: pick it from the price list or type its name; the price is always editable. */
-export function AddItemForm({ orderId, priceList }: AddItemFormProps) {
+/** Adds one garment: pick a product or type its name; the price is typed or picked from the buttons. */
+export function AddItemForm({ orderId, products }: AddItemFormProps) {
   const t = useTranslations("AddItem");
   const [state, formAction] = useActionState(addItemAction, initialState);
   const { errors, values } = state;
-  // Controlled fields: picking a list item fills the price and clears a typed name,
-  // typing a name clears the list choice ("or", never both). The price stays editable.
+  // Controlled fields: picking a product clears a typed name, typing a name clears the
+  // product ("or", never both). The price is independent of both.
   const [listItemId, setListItemId] = useState(values.priceListItemId);
   const [customName, setCustomName] = useState(values.customName);
   const [price, setPrice] = useState(values.price);
   const errorText = (key: AddItemErrorKey | undefined) => (key ? t(key) : undefined);
 
   const onPickListItem = (id: string) => {
-    const entry = priceList.find((candidate) => candidate.id === id);
     setListItemId(id);
-    if (entry) setCustomName("");
-    setPrice(entry ? toPriceInput(entry.priceKurus) : "");
+    if (id) setCustomName("");
   };
 
   const onTypeName = (name: string) => {
     setCustomName(name);
-    if (name && listItemId) {
-      setListItemId("");
-      setPrice("");
-    }
+    if (name) setListItemId("");
   };
 
   return (
@@ -68,9 +63,9 @@ export function AddItemForm({ orderId, priceList }: AddItemFormProps) {
           className="min-h-14 w-full rounded-xl border-2 border-border bg-surface px-3 text-lg"
         >
           <option value="">{t("fromListNone")}</option>
-          {priceList.map((entry) => (
-            <option key={entry.id} value={entry.id}>
-              {entry.label}
+          {products.map((product) => (
+            <option key={product.id} value={product.id}>
+              {product.name}
             </option>
           ))}
         </select>
