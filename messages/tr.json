@@ -179,7 +179,9 @@
     "rack": "Askı/raf: {rack}",
     "noPrice": "Fiyat yok",
     "noticeConflict": "Bu parçanın durumu başka bir yerde değişmiş. Sayfa yenilendi, tekrar deneyin.",
-    "noticeItemAdded": "Parça eklendi."
+    "noticeItemAdded": "Parça eklendi.",
+    "editCustomer": "Müşteriyi düzenle",
+    "noticeCustomerSaved": "Müşteri bilgileri kaydedildi"
   },
   "NewOrder": {
     "title": "Yeni sipariş",
@@ -218,6 +220,25 @@
     "cancel": "Vazgeç",
     "tooLong": "Bu metin çok uzun.",
     "dateInvalid": "Geçerli bir tarih seçin."
+  },
+  "EditCustomer": {
+    "title": "Müşteriyi düzenle",
+    "intro": "Değişiklik bu müşterinin bütün siparişlerinde görünür.",
+    "name": "Ad soyad",
+    "phone": "Telefon numarası",
+    "preferenceNote": "Müşteri tercihi",
+    "preferenceNoteHint": "Örnek: kola istemiyor, askıda teslim",
+    "save": "Kaydet",
+    "saving": "Kaydediliyor…",
+    "cancel": "Vazgeç",
+    "nameRequired": "İsmi girin.",
+    "nameTooLong": "İsim çok uzun (en fazla 100 karakter).",
+    "phoneRequired": "Telefon numarasını girin.",
+    "phoneInvalid": "Bu telefon numarası geçersiz. Numarayı kontrol edin.",
+    "preferenceNoteTooLong": "Not en fazla 300 karakter olabilir.",
+    "phoneTaken": "Bu numara {name} adlı müşteriye kayıtlı.",
+    "openCustomer": "Müşteriyi aç",
+    "phoneHint": "Örneğin 0532 123 45 67. Yurt dışı numaraları + ile başlamalı."
   },
   "Tracking": {
     "title": "Siparişiniz",

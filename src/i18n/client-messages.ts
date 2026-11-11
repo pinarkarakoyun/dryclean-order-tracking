@@ -18,6 +18,7 @@ export const ADMIN_CLIENT_NAMESPACES = [
   "AdminLogin",
   "NewOrder",
   "EditOrder",
+  "EditCustomer",
   "OrderDetail",
   "AddItem",
   "CustomerNotFound",

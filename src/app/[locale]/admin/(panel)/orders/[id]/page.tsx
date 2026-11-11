@@ -79,6 +79,7 @@ export default async function OrderDetailPage({ params, searchParams }: Props) {
         </Notice>
       )}
       {notice === "saved" && <Notice title={t("noticeSaved")} />}
+      {notice === "customerSaved" && <Notice title={t("noticeCustomerSaved")} />}
       {undo ? (
         <UndoBanner
           orderId={order.id}
@@ -185,7 +186,11 @@ export default async function OrderDetailPage({ params, searchParams }: Props) {
       <TrackingCard orderNumber={order.orderNumber} trackingToken={order.trackingToken} />
 
       <DetailSection title={t("customer")}>
-        <DetailRow label={t("name")}>{order.customer.name}</DetailRow>
+        <DetailRow label={t("name")}>
+          <Link href={`/admin/customers/${order.customer.id}`} className="font-medium underline">
+            {order.customer.name}
+          </Link>
+        </DetailRow>
         <DetailRow label={t("phone")}>
           <a href={`tel:${order.customer.phone}`} className="font-medium underline">
             {formatPhone(order.customer.phone)}
@@ -195,6 +200,13 @@ export default async function OrderDetailPage({ params, searchParams }: Props) {
           {order.customer.preferenceNote}
         </DetailRow>
       </DetailSection>
+      <ButtonLink
+        href={`/admin/customers/${order.customer.id}/edit?from=order:${order.id}`}
+        variant="secondary"
+        className="self-start"
+      >
+        {t("editCustomer")}
+      </ButtonLink>
     </div>
   );
 }
