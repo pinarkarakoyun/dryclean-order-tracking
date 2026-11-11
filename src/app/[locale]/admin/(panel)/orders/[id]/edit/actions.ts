@@ -10,7 +10,7 @@ import {
   validateExpress,
   validateOptionalText,
 } from "@/lib/order-validation";
-import { updateOrder } from "@/lib/orders";
+import { getOrderDetail, updateOrder } from "@/lib/orders";
 
 const FIELDS = ["express", "estimatedReadyDate", "publicDescription", "internalNote"] as const;
 
@@ -50,8 +50,15 @@ export async function updateOrderAction(
     return { errors, values };
   }
 
+  const current = await getOrderDetail(orderId);
+  if (!current) {
+    redirect({ href: "/admin/orders", locale });
+    return { errors: {}, values: null };
+  }
+
   const saved = await updateOrder(orderId, {
-    expressPercent: validateExpress(values.express),
+    // An order that is already express keeps its stored rate.
+    expressPercent: validateExpress(values.express, current.order.expressPercent),
     estimatedReadyDate: estimatedReadyDate.value ?? null,
     publicDescription: publicDescription.value ?? null,
     internalNote: internalNote.value ?? null,

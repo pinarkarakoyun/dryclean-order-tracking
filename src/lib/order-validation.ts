@@ -79,9 +79,14 @@ export function resolveItemPrice(
   return { value: price.value ?? listPriceKurus };
 }
 
-/** The "express" checkbox: ticked sends "on". Returns the surcharge to copy onto the order. */
-export function validateExpress(input: string): number | null {
-  return input === "on" ? EXPRESS_PERCENT : null;
+/**
+ * The "express" checkbox (ticked sends "on") -> the surcharge to store on the order.
+ * An order that is already express keeps its stored rate: the rate is copied once (spec §3),
+ * so a later change of EXPRESS_PERCENT never changes an old order's total.
+ */
+export function validateExpress(input: string, storedPercent: number | null): number | null {
+  if (input !== "on") return null;
+  return storedPercent ?? EXPRESS_PERCENT;
 }
 
 /** Optional date "YYYY-MM-DD" (what <input type="date"> sends). */

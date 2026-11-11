@@ -6,13 +6,15 @@ import { DueBadge } from "@/components/admin/DueBadge";
 import { ItemList } from "@/components/admin/ItemList";
 import { MissingFieldChips } from "@/components/admin/MissingFieldChips";
 import { TrackingCard } from "@/components/admin/TrackingCard";
+import { UndoBanner } from "@/components/admin/UndoBanner";
 import { WhatsAppCard } from "@/components/admin/WhatsAppCard";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Link } from "@/i18n/navigation";
 import { initPageLocale } from "@/i18n/page-locale";
 import { requireAdmin } from "@/lib/auth";
-import { calculateOrderTotal, deriveOrderStatus } from "@/lib/order-calc";
+import { getUndoTarget } from "@/lib/item-status";
+import { calculateOrderTotal, deriveOrderStatus, tagLabel } from "@/lib/order-calc";
 import {
   dateOnlyToDate,
   getDueState,
@@ -22,6 +24,7 @@ import {
 import { getOrderDetail } from "@/lib/orders";
 import { formatPhone } from "@/lib/phone";
 import { listActivePriceListItems } from "@/lib/price-list";
+import type { ItemStatusEvent, OrderItem } from "@/types/order-model";
 
 type Props = PageProps<"/[locale]/admin/orders/[id]">;
 
@@ -33,14 +36,16 @@ export default async function OrderDetailPage({ params, searchParams }: Props) {
   await initPageLocale(params);
   await requireAdmin();
   const { id } = await params;
-  // Set by the forms after saving, to show a confirmation.
-  const { notice } = await searchParams;
+  // Set by the forms after saving, to show a confirmation ("changed" = item whose status just changed).
+  const { notice, changed } = await searchParams;
 
   const result = await getOrderDetail(id);
   if (!result) notFound();
   const { order, events } = result;
 
   const t = await getTranslations("OrderDetail");
+  const tStatus = await getTranslations("Status");
+  const undo = notice === "status" ? undoOffer(order.items, events, changed) : null;
   const tAddItem = await getTranslations("AddItem");
   const format = await getFormatter();
   const priceList = await listActivePriceListItems();
@@ -74,7 +79,19 @@ export default async function OrderDetailPage({ params, searchParams }: Props) {
         </Notice>
       )}
       {notice === "saved" && <Notice title={t("noticeSaved")} />}
-      {notice === "status" && <Notice title={t("noticeStatus")} />}
+      {undo ? (
+        <UndoBanner
+          orderId={order.id}
+          itemId={undo.item.id}
+          itemLabel={`${tagLabel(order.orderNumber, undo.item.itemNo)} · ${undo.item.garmentName}`}
+          statusLabel={tStatus(undo.item.status)}
+          currentStatus={undo.item.status}
+          remainingMs={undo.remainingMs}
+        />
+      ) : (
+        notice === "status" && <Notice title={t("noticeStatus")} />
+      )}
+      {notice === "undone" && <Notice title={t("noticeUndone")} />}
       {notice === "itemAdded" && <Notice title={t("noticeItemAdded")} />}
       {notice === "conflict" && (
         <div role="alert" className="rounded-xl bg-amber-100 p-4 text-lg font-bold text-amber-950">
@@ -180,6 +197,26 @@ export default async function OrderDetailPage({ params, searchParams }: Props) {
       </DetailSection>
     </div>
   );
+}
+
+/** "Geri al" is offered for this many milliseconds after a change (CLAUDE.md: 8 seconds). */
+const UNDO_WINDOW_MS = 8_000;
+
+/**
+ * The just-changed item and the time left to undo it, or null. Based on the event time,
+ * so reloading the page later does not bring "Geri al" back. The server re-checks on undo.
+ */
+function undoOffer(
+  items: OrderItem[],
+  events: ItemStatusEvent[],
+  changedItemId: string | string[] | undefined,
+): { item: OrderItem; remainingMs: number } | null {
+  const item = items.find((candidate) => candidate.id === changedItemId);
+  if (!item) return null;
+  const latest = events.filter((event) => event.itemId === item.id).at(-1) ?? null;
+  if (getUndoTarget(latest, item.status) === null || !latest) return null;
+  const remainingMs = UNDO_WINDOW_MS - (Date.now() - new Date(latest.changedAt).getTime());
+  return remainingMs > 0 ? { item, remainingMs } : null;
 }
 
 /** Green confirmation box shown after saving. */

@@ -53,6 +53,12 @@ test("invalid typed price is an error, even with a list price", () => {
 });
 
 test("express checkbox", () => {
-  assert.equal(validateExpress("on"), 50);
-  assert.equal(validateExpress(""), null);
+  assert.equal(validateExpress("on", null), 50);
+  assert.equal(validateExpress("", null), null);
+  assert.equal(validateExpress("", 50), null);
+});
+
+// The rate is copied onto the order once (spec §3): editing an old express order keeps its rate.
+test("an express order keeps its stored rate when edited", () => {
+  assert.equal(validateExpress("on", 40), 40);
 });

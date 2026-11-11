@@ -11,7 +11,7 @@ import type {
 import { toCustomer, type CustomerRow } from "./customers";
 import { getDb } from "./db";
 import { isUuid } from "./ids";
-import { deriveOrderStatus, parseTagLabel, tagLabel } from "./order-calc";
+import { customerTimeline, deriveOrderStatus, parseTagLabel, tagLabel } from "./order-calc";
 import { collectAllPages } from "./paging";
 import { generateTrackingToken } from "./token";
 
@@ -287,6 +287,42 @@ export async function changeItemStatus(input: {
   fail("change status", error.message);
 }
 
+/**
+ * What a status change needs to know about one garment: its order (to check the item belongs
+ * to the order on screen), its current status and its latest history event (for undo). Null if unknown.
+ */
+export async function getItemForStatusChange(itemId: string): Promise<{
+  orderId: string;
+  status: ItemStatus;
+  latest: ItemStatusEvent | null;
+} | null> {
+  if (!isUuid(itemId)) return null;
+  const db = getDb();
+
+  const item = await db
+    .from("order_items")
+    .select("order_id, status")
+    .eq("id", itemId)
+    .maybeSingle<{ order_id: string; status: ItemStatus }>();
+  if (item.error) fail("item", item.error.message);
+  if (!item.data) return null;
+
+  const latest = await db
+    .from("item_status_events")
+    .select("*")
+    .eq("item_id", itemId)
+    .order("id", { ascending: false })
+    .limit(1)
+    .maybeSingle<EventRow>();
+  if (latest.error) fail("item history", latest.error.message);
+
+  return {
+    orderId: item.data.order_id,
+    status: item.data.status,
+    latest: latest.data ? toEvent(latest.data) : null,
+  };
+}
+
 // Tokens are base64url (see token.ts); demo tokens have a "demo-" prefix.
 const TOKEN_PATTERN = /^[A-Za-z0-9_-]{20,64}$/;
 
@@ -319,11 +355,17 @@ export async function getPublicOrderByToken(token: string): Promise<PublicOrder 
   if (!data) return null;
 
   const items = [...data.items].sort((a, b) => a.item_no - b.item_no);
-  let events: { item_id: string; to_status: ItemStatus; changed_at: string }[] = [];
+  // `kind` is read only to hide undone changes (customerTimeline); it never reaches the page.
+  let events: {
+    item_id: string;
+    to_status: ItemStatus;
+    kind: StatusEventKind;
+    changed_at: string;
+  }[] = [];
   if (items.length > 0) {
     const result = await db
       .from("item_status_events")
-      .select("item_id, to_status, changed_at")
+      .select("item_id, to_status, kind, changed_at")
       .in("item_id", items.map((item) => item.id))
       .order("id")
       .returns<typeof events>();
@@ -341,9 +383,15 @@ export async function getPublicOrderByToken(token: string): Promise<PublicOrder 
       label: tagLabel(data.order_number, item.item_no),
       garmentName: item.garment_name,
       status: item.status,
-      timeline: events
-        .filter((event) => event.item_id === item.id)
-        .map((event) => ({ status: event.to_status, changedAt: event.changed_at })),
+      timeline: customerTimeline(
+        events
+          .filter((event) => event.item_id === item.id)
+          .map((event) => ({
+            toStatus: event.to_status,
+            kind: event.kind,
+            changedAt: event.changed_at,
+          })),
+      ),
     })),
   };
 }

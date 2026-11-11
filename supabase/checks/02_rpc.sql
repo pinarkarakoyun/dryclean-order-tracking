@@ -1,4 +1,4 @@
--- RPC checks (run after 0003). Expected result: 8 rows starting with "OK:".
+-- RPC checks (run after 0003 and 0004). Expected result: 9 rows starting with "OK:".
 -- Any failure stops with an error that starts with "FAIL:".
 -- All test data is rolled back inside the function: nothing stays in the database.
 
@@ -71,6 +71,15 @@ begin
     exception when raise_exception then
       if sqlerrm <> 'status_conflict' then raise; end if;
       results := results || 'OK: conflict'::text;
+    end;
+
+    -- 0004: a NULL expected status is a conflict too, never a silent pass.
+    begin
+      perform public.change_item_status(v_item2.id, null, 'CLEANING', 'normal');
+      raise exception 'FAIL: null expected';
+    exception when raise_exception then
+      if sqlerrm <> 'status_conflict' then raise; end if;
+      results := results || 'OK: null expected'::text;
     end;
 
     begin

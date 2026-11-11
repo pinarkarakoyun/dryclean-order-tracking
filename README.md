@@ -34,8 +34,9 @@ npm run dev                  # http://localhost:3000/admin
 | 2 | `supabase/migrations/0002_append_only.sql` | Success |
 | 3 | `supabase/checks/01_schema.sql` | 8 rows starting with `OK:` |
 | 4 | `supabase/migrations/0003_rpc.sql` | Success |
-| 5 | `supabase/checks/02_rpc.sql` | 8 rows starting with `OK:` |
-| 6 | `supabase/seed.sql` (demo data, run once) | 4 orders |
+| 5 | `supabase/migrations/0004_conflict_null_check.sql` | Success |
+| 6 | `supabase/checks/02_rpc.sql` | 9 rows starting with `OK:` |
+| 7 | `supabase/seed.sql` (demo data, run once) | 4 orders |
 
 3. Put the URL and secret key in `.env.local`, then check the connection:
 
@@ -89,7 +90,7 @@ Required before entering real customer data:
 
 ## Known limitations
 
-- Status changes allow only "next step" and "cancel" until roadmap step 4 (undo, step back, delivery confirmation).
+- Which status changes are allowed is decided by `canTransition` in `src/lib/item-status.ts`. "Geri al" is shown for 8 seconds after a change; the server allows undoing only an item's latest change and checks no time limit (spec §8). Undone changes are hidden from the customer's timeline.
 - No photo upload, price list editing or customer editing yet (roadmap step 5); the `item_photos` table and private `item-photos` bucket exist.
 - All orders are read (page by page, past Supabase's 1000-row limit) and searched in memory: fine for one shop, but slower as orders pile up. Move search and filters into SQL when it gets slow.
 - In production mode the login cookie is HTTPS-only, so `next start` over plain `http://192.168…` cannot keep you logged in. Use `npm run dev` for local demos.

@@ -3,7 +3,8 @@
 import { getLocale } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
 import { requireAdmin } from "@/lib/auth";
-import { canQuickChange } from "@/lib/item-status";
+import { isUuid } from "@/lib/ids";
+import { canTransition, getUndoTarget } from "@/lib/item-status";
 import { LIMITS } from "@/lib/order-limits";
 import {
   readText,
@@ -11,29 +12,81 @@ import {
   resolveItemSource,
   validateOptionalText,
 } from "@/lib/order-validation";
-import { addOrderItem, changeItemStatus } from "@/lib/orders";
+import { addOrderItem, changeItemStatus, getItemForStatusChange } from "@/lib/orders";
 import { getPriceListItem } from "@/lib/price-list";
-import { ITEM_STATUSES } from "@/types/order-model";
+import { ITEM_STATUSES, type ItemStatus } from "@/types/order-model";
 
-/** Called by the status buttons of one garment on the order detail page. */
+/** Reads the fields every status form sends, and checks the item belongs to the order on screen. */
+async function readStatusForm(formData: FormData) {
+  const orderId = readText(formData, "orderId");
+  const itemId = readText(formData, "itemId");
+  // Only known statuses are accepted.
+  const expected = ITEM_STATUSES.find((value) => value === readText(formData, "expectedStatus"));
+  const item = isUuid(orderId) ? await getItemForStatusChange(itemId) : null;
+  return { orderId, itemId, expected, item: item && item.orderId === orderId ? item : null };
+}
+
+function detailHref(orderId: string, query: Record<string, string> = {}) {
+  return { pathname: `/admin/orders/${orderId}`, query };
+}
+
+/** The status buttons of one garment: a step forward (or back), cancel, bring back. */
 export async function changeItemStatusAction(formData: FormData): Promise<void> {
   // Server Actions are public endpoints: always check the login again here.
   await requireAdmin();
   const locale = await getLocale();
 
-  const orderId = readText(formData, "orderId");
-  const itemId = readText(formData, "itemId");
-  // Only known statuses are accepted.
-  const expected = ITEM_STATUSES.find((value) => value === readText(formData, "expectedStatus"));
+  const { orderId, itemId, expected, item } = await readStatusForm(formData);
+  if (!item || !expected) {
+    redirect({ href: "/admin/orders", locale });
+    return;
+  }
   const target = ITEM_STATUSES.find((value) => value === readText(formData, "toStatus"));
-  const detail = (notice?: string) => ({
-    pathname: `/admin/orders/${orderId}`,
-    query: notice ? { notice } : {},
-  });
+  // The form can only ask for these two kinds; undo has its own action below.
+  const kind = readText(formData, "kind") === "step_back" ? "step_back" : "normal";
 
-  // TEMPORARY rule until step 4 (canTransition): only the next step, or cancel.
-  if (!expected || !target || !canQuickChange(expected, target)) {
-    redirect({ href: detail(), locale });
+  // Pınar's rules decide which changes are allowed (src/lib/item-status.ts).
+  if (!target || !canTransition(expected, target, kind)) {
+    redirect({ href: detailHref(orderId), locale });
+    return;
+  }
+
+  const result = await changeItemStatus({ itemId, expectedStatus: expected, toStatus: target, kind });
+  if (result === "not_found") {
+    redirect({ href: "/admin/orders", locale });
+    return;
+  }
+  redirect({
+    href: detailHref(
+      orderId,
+      // "changed" lets the page offer "Geri al" for this item for a few seconds.
+      result === "conflict" ? { notice: "conflict" } : { notice: "status", changed: itemId },
+    ),
+    locale,
+  });
+}
+
+/** "Geri al": reverses the item's latest change by adding a new "undo" event (nothing is deleted). */
+export async function undoItemStatusAction(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const locale = await getLocale();
+
+  const { orderId, itemId, expected, item } = await readStatusForm(formData);
+  if (!item || !expected) {
+    redirect({ href: "/admin/orders", locale });
+    return;
+  }
+
+  // A second tap on "Geri al" after the undo went through: nothing more to do.
+  if (item.latest?.kind === "undo" && item.latest.fromStatus === expected) {
+    redirect({ href: detailHref(orderId, { notice: "undone" }), locale });
+    return;
+  }
+
+  const target: ItemStatus | null =
+    item.status === expected ? getUndoTarget(item.latest, item.status) : null;
+  if (!target) {
+    redirect({ href: detailHref(orderId, { notice: "conflict" }), locale });
     return;
   }
 
@@ -41,14 +94,12 @@ export async function changeItemStatusAction(formData: FormData): Promise<void> 
     itemId,
     expectedStatus: expected,
     toStatus: target,
-    kind: "normal",
+    kind: "undo",
   });
-
-  if (result === "not_found") {
-    redirect({ href: "/admin/orders", locale });
-    return;
-  }
-  redirect({ href: detail(result === "conflict" ? "conflict" : "status"), locale });
+  redirect({
+    href: detailHref(orderId, { notice: result === "ok" ? "undone" : "conflict" }),
+    locale,
+  });
 }
 
 export type AddItemErrorKey =

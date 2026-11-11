@@ -1,7 +1,47 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { ItemStatus } from "@/types/order-model";
-import { calculateOrderTotal, deriveOrderStatus, parseTagLabel, tagLabel } from "./order-calc.ts";
+import {
+  calculateOrderTotal,
+  customerTimeline,
+  deriveOrderStatus,
+  parseTagLabel,
+  tagLabel,
+} from "./order-calc.ts";
+
+// ---- Customer timeline: a wrong click and its undo are not shown to the customer ----
+
+type E = { toStatus: ItemStatus; kind: "normal" | "undo" | "step_back"; changedAt: string };
+const e = (toStatus: ItemStatus, kind: E["kind"] = "normal", changedAt: string = toStatus): E => ({
+  toStatus,
+  kind,
+  changedAt,
+});
+
+test("timeline without undo is shown as is", () => {
+  assert.deepEqual(customerTimeline([e("RECEIVED"), e("CLEANING")]), [
+    { status: "RECEIVED", changedAt: "RECEIVED" },
+    { status: "CLEANING", changedAt: "CLEANING" },
+  ]);
+});
+
+test("an undone change and its undo are hidden", () => {
+  const events = [e("RECEIVED"), e("CLEANING"), e("RECEIVED", "undo", "undo")];
+  assert.deepEqual(customerTimeline(events), [{ status: "RECEIVED", changedAt: "RECEIVED" }]);
+});
+
+test("only the undone change is hidden, later changes stay", () => {
+  const events = [e("RECEIVED"), e("DELIVERED"), e("RECEIVED", "undo", "u"), e("CLEANING")];
+  assert.deepEqual(customerTimeline(events), [
+    { status: "RECEIVED", changedAt: "RECEIVED" },
+    { status: "CLEANING", changedAt: "CLEANING" },
+  ]);
+});
+
+test("a step back stays visible (it is a real change)", () => {
+  const events = [e("RECEIVED"), e("IRONING"), e("CLEANING", "step_back")];
+  assert.equal(customerTimeline(events).length, 3);
+});
 
 test("tagLabel joins order and item number", () => {
   assert.equal(tagLabel(1048, 1), "1048-1");

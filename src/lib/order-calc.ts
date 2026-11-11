@@ -50,6 +50,26 @@ export function deriveOrderStatus(items: Pick<OrderItem, "status">[]): OrderStat
 }
 
 /**
+ * The status history as the customer sees it: an undone change and the undo itself are left out,
+ * so a wrong click never shows up as "Teslim edildi → Teslim alındı". Step backs stay (real changes).
+ * Events must be oldest first. The admin panel keeps showing every event.
+ */
+export function customerTimeline(
+  events: { toStatus: ItemStatus; kind: "normal" | "undo" | "step_back"; changedAt: string }[],
+): { status: ItemStatus; changedAt: string }[] {
+  const shown: { status: ItemStatus; changedAt: string }[] = [];
+  for (const event of events) {
+    if (event.kind === "undo") {
+      // An undo reverses the change right before it: drop that one, and do not show the undo.
+      shown.pop();
+    } else {
+      shown.push({ status: event.toStatus, changedAt: event.changedAt });
+    }
+  }
+  return shown;
+}
+
+/**
  * Order total in kuruş. Cancelled items do not count; a missing price on an active item
  * makes the total "incomplete". Integer math only, rounded half up to the nearest kuruş.
  */
