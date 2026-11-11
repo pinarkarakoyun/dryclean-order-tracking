@@ -302,6 +302,9 @@
     "edit": "Düzenle",
     "hide": "Gizle",
     "restore": "Geri getir",
+    "editLabel": "{name} ürününü düzenle",
+    "hideLabel": "{name} ürününü gizle",
+    "restoreLabel": "{name} ürününü geri getir",
     "hiddenTitle": "Gizlenen ürünler ({count})",
     "noProducts": "Henüz ürün yok.",
     "renameTitle": "Ürünü düzenle",
@@ -334,7 +337,7 @@
   },
   "ProductNotFound": {
     "title": "Ürün bulunamadı",
-    "text": "Bu ürün silinmiş veya bağlantı yanlış olabilir.",
+    "text": "Bu ürün bulunamadı. Bağlantı yanlış olabilir.",
     "back": "Ürünlere dön"
   }
 }

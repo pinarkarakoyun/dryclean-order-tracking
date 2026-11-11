@@ -119,6 +119,10 @@ export async function addQuickPriceAction(
 export async function deleteQuickPriceAction(formData: FormData): Promise<void> {
   await requireAdmin();
   const locale = await getLocale();
-  await deleteQuickPrice(readText(formData, "quickPriceId"));
-  redirect({ href: { pathname: "/admin/products", query: { notice: "priceDeleted" } }, locale });
+  // A stale tab may delete a price that is already gone: then no notice (nothing happened).
+  const deleted = await deleteQuickPrice(readText(formData, "quickPriceId"));
+  redirect({
+    href: deleted ? { pathname: "/admin/products", query: { notice: "priceDeleted" } } : "/admin/products",
+    locale,
+  });
 }

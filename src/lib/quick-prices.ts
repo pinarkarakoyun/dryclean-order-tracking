@@ -38,10 +38,16 @@ export async function addQuickPrice(
   return { ok: true };
 }
 
-/** Deletes one quick price. An invalid id or a missing row is not an error. */
-export async function deleteQuickPrice(id: string): Promise<void> {
-  if (!isUuid(id)) return;
+/** Deletes one quick price. False when nothing was deleted (invalid id, or already gone). */
+export async function deleteQuickPrice(id: string): Promise<boolean> {
+  if (!isUuid(id)) return false;
   await connection();
-  const { error } = await getDb().from("quick_prices").delete().eq("id", id);
+  const { data, error } = await getDb()
+    .from("quick_prices")
+    .delete()
+    .eq("id", id)
+    .select("id")
+    .returns<{ id: string }[]>();
   if (error) throw new Error(`Database error (quick prices): ${error.message}`);
+  return data.length > 0;
 }

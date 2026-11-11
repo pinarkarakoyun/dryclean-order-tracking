@@ -81,12 +81,20 @@ async function ProductsContent({ searchParams }: { searchParams: SearchParams })
                 <li key={product.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-2">
                   <span className="text-lg font-medium">{product.name}</span>
                   <div className="flex items-center gap-1">
-                    <ButtonLink href={`/admin/products/${product.id}/edit`} variant="secondary">
+                    <ButtonLink
+                      href={`/admin/products/${product.id}/edit`}
+                      variant="secondary"
+                      aria-label={t("editLabel", { name: product.name })}
+                    >
                       {t("edit")}
                     </ButtonLink>
                     <form action={hideProductAction}>
                       <input type="hidden" name="productId" value={product.id} />
-                      <button type="submit" className={rowButton}>
+                      <button
+                        type="submit"
+                        aria-label={t("hideLabel", { name: product.name })}
+                        className={rowButton}
+                      >
                         {t("hide")}
                       </button>
                     </form>
@@ -105,12 +113,26 @@ async function ProductsContent({ searchParams }: { searchParams: SearchParams })
                 {hidden.map((product) => (
                   <li key={product.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-2">
                     <span className="text-lg text-muted">{product.name}</span>
-                    <form action={restoreProductAction}>
-                      <input type="hidden" name="productId" value={product.id} />
-                      <button type="submit" className={rowButton}>
-                        {t("restore")}
-                      </button>
-                    </form>
+                    {/* Hidden products can be renamed too (spec §6.3). */}
+                    <div className="flex items-center gap-1">
+                      <ButtonLink
+                        href={`/admin/products/${product.id}/edit`}
+                        variant="secondary"
+                        aria-label={t("editLabel", { name: product.name })}
+                      >
+                        {t("edit")}
+                      </ButtonLink>
+                      <form action={restoreProductAction}>
+                        <input type="hidden" name="productId" value={product.id} />
+                        <button
+                          type="submit"
+                          aria-label={t("restoreLabel", { name: product.name })}
+                          className={rowButton}
+                        >
+                          {t("restore")}
+                        </button>
+                      </form>
+                    </div>
                   </li>
                 ))}
               </ul>
