@@ -56,7 +56,8 @@
     "dashboard": "Genel bakış",
     "orders": "Siparişler",
     "newOrder": "Yeni sipariş",
-    "customers": "Müşteriler"
+    "customers": "Müşteriler",
+    "products": "Ürünler ve fiyatlar"
   },
   "AdminLogin": {
     "title": "Giriş",
@@ -290,5 +291,37 @@
     "itemInvalid": "Bu ürün artık listede yok. Başka bir ürün seçin veya adını yazın.",
     "tooLong": "Bu metin çok uzun.",
     "priceInvalid": "Geçerli bir tutar girin, örneğin 150 veya 150,50."
+  },
+  "Products": {
+    "title": "Ürünler ve fiyatlar",
+    "intro": "Parça eklerken seçilen ürünler ve fiyat butonları.",
+    "productsTitle": "Ürünler",
+    "newProduct": "Yeni ürün adı",
+    "add": "Ekle",
+    "adding": "Ekleniyor…",
+    "edit": "Düzenle",
+    "hide": "Gizle",
+    "restore": "Geri getir",
+    "hiddenTitle": "Gizlenen ürünler ({count})",
+    "noProducts": "Henüz ürün yok.",
+    "renameTitle": "Ürünü düzenle",
+    "renameIntro": "Yeni ad eski siparişleri değiştirmez.",
+    "name": "Ürün adı",
+    "save": "Kaydet",
+    "saving": "Kaydediliyor…",
+    "cancel": "Vazgeç",
+    "nameRequired": "Ürün adı gerekli.",
+    "nameTooLong": "Ürün adı en fazla 60 karakter olabilir.",
+    "duplicateActive": "Bu ürün zaten listede.",
+    "duplicateHidden": "Bu ürün gizlenenler arasında var. Aşağıdan geri getirebilirsiniz.",
+    "noticeProductAdded": "Ürün eklendi",
+    "noticeProductRenamed": "Ürün kaydedildi",
+    "noticeProductHidden": "{name} gizlendi",
+    "noticeProductRestored": "{name} geri getirildi"
+  },
+  "ProductNotFound": {
+    "title": "Ürün bulunamadı",
+    "text": "Bu ürün silinmiş veya bağlantı yanlış olabilir.",
+    "back": "Ürünlere dön"
   }
 }

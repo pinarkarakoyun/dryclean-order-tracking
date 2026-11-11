@@ -23,6 +23,7 @@ import {
 } from "@/lib/order-utils";
 import { getOrderDetail } from "@/lib/orders";
 import { formatPhone } from "@/lib/phone";
+import { sortProducts } from "@/lib/product-validation";
 import { listProducts } from "@/lib/products";
 import type { ItemStatusEvent, OrderItem } from "@/types/order-model";
 
@@ -48,9 +49,7 @@ export default async function OrderDetailPage({ params, searchParams }: Props) {
   const undo = notice === "status" ? undoOffer(order.items, events, changed) : null;
   const tAddItem = await getTranslations("AddItem");
   const format = await getFormatter();
-  const products = (await listProducts())
-    .filter((product) => product.isActive)
-    .sort((a, b) => a.name.localeCompare(b.name, "tr"));
+  const products = sortProducts(await listProducts()).filter((product) => product.isActive);
   const summary = deriveOrderStatus(order.items);
   const total = calculateOrderTotal(order.items, order.expressPercent);
   const missing = getMissingFields(order);

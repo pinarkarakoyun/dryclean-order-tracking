@@ -22,6 +22,8 @@ export const ADMIN_CLIENT_NAMESPACES = [
   "OrderDetail",
   "AddItem",
   "CustomerNotFound",
+  "Products",
+  "ProductNotFound",
   "ErrorPage",
 ] as const satisfies readonly Namespace[];
 
