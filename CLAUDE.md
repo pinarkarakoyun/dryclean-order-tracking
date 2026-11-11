@@ -38,6 +38,7 @@ parça başına en fazla 5; fotoğraf notu yok; silme onay ister; migration 0006
 2 MB + image/jpeg kuralı ekler. Tablo `item_photos` ve gizli bucket 0001'de hazır.
 
 ## Dükkâna sorulacaklar (henüz cevapsız)
+Dükkâna gönderilecek sade liste: docs/dukkan-sorulari.md (cevaplar gelince ikisini birlikte güncelle).
 Temizlik dükkânda mı, merkezi tesiste mi? Etiket sistemi? Bilgisayar/tablet var mı?
 Veresiye var mı? Kâğıt fiş mi, WhatsApp linki mi? Gerçek fiyat listesi?
 Kaç hızlı fiyat butonu (şimdilik en fazla 8)? Ürünler alfabetik mi, en çok kullanılan üstte mi?
