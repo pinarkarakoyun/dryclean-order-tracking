@@ -7,6 +7,8 @@ import { requireAdmin } from "@/lib/auth";
 import { readText } from "@/lib/order-validation";
 import { validateProductName, type ProductNameErrorKey } from "@/lib/product-validation";
 import { createProduct, renameProduct, setProductActive } from "@/lib/products";
+import { validateQuickPrice, type QuickPriceErrorKey } from "@/lib/quick-price-validation";
+import { addQuickPrice, deleteQuickPrice, listQuickPrices } from "@/lib/quick-prices";
 
 export type ProductFormState = {
   error: ProductNameErrorKey | null;
@@ -86,4 +88,37 @@ export async function hideProductAction(formData: FormData): Promise<void> {
 
 export async function restoreProductAction(formData: FormData): Promise<void> {
   await changeVisibility(formData, true);
+}
+
+export type QuickPriceFormState = {
+  error: QuickPriceErrorKey | null;
+  /** What the user typed, so the form keeps it after an error. */
+  value: string;
+};
+
+/** Adds a quick price. The limit and duplicates are checked against a fresh server read. */
+export async function addQuickPriceAction(
+  _previousState: QuickPriceFormState,
+  formData: FormData,
+): Promise<QuickPriceFormState> {
+  await requireAdmin();
+  const locale = await getLocale();
+  const value = readText(formData, "amount");
+
+  const validated = validateQuickPrice(value, await listQuickPrices());
+  if ("error" in validated) return { error: validated.error, value };
+
+  const result = await addQuickPrice(validated.value);
+  if (!result.ok) return { error: "duplicate", value };
+
+  redirect({ href: { pathname: "/admin/products", query: { notice: "priceAdded" } }, locale });
+  return { error: null, value: "" };
+}
+
+/** Deletes a quick price: one tap, no confirmation (it can simply be added again). */
+export async function deleteQuickPriceAction(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const locale = await getLocale();
+  await deleteQuickPrice(readText(formData, "quickPriceId"));
+  redirect({ href: { pathname: "/admin/products", query: { notice: "priceDeleted" } }, locale });
 }

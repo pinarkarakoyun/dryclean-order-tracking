@@ -9,12 +9,14 @@ import {
 } from "@/app/[locale]/admin/(panel)/orders/[id]/actions";
 import { Input } from "@/components/ui/Input";
 import { SubmitButton } from "@/components/ui/SubmitButton";
-import { LIMITS, QUICK_PRICES_KURUS } from "@/lib/order-limits";
+import { LIMITS } from "@/lib/order-limits";
 
 type AddItemFormProps = {
   orderId: string;
   /** Visible products, alphabetical. Picking one fills only the name, never the price. */
   products: { id: string; name: string }[];
+  /** Quick price buttons in kuruş, low to high (edited in the panel). Empty: no buttons. */
+  quickPrices: number[];
 };
 
 /** 12000 -> "120", 15050 -> "150,50": the way people type prices. */
@@ -28,7 +30,7 @@ const initialState: AddItemState = {
 };
 
 /** Adds one garment: pick a product or type its name; the price is typed or picked from the buttons. */
-export function AddItemForm({ orderId, products }: AddItemFormProps) {
+export function AddItemForm({ orderId, products, quickPrices }: AddItemFormProps) {
   const t = useTranslations("AddItem");
   const [state, formAction] = useActionState(addItemAction, initialState);
   const { errors, values } = state;
@@ -95,25 +97,27 @@ export function AddItemForm({ orderId, products }: AddItemFormProps) {
         />
       </Field>
 
-      <fieldset className="-mt-2 flex flex-col gap-2">
-        <legend className="mb-2 font-semibold">{t("quickPrices")}</legend>
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-          {QUICK_PRICES_KURUS.map((kurus) => {
-            const text = toPriceInput(kurus);
-            return (
-              <button
-                key={kurus}
-                type="button"
-                onClick={() => setPrice(text)}
-                aria-pressed={price === text}
-                className="min-h-14 rounded-xl border-2 border-border bg-surface text-lg font-semibold hover:border-primary aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground"
-              >
-                {text} ₺
-              </button>
-            );
-          })}
-        </div>
-      </fieldset>
+      {quickPrices.length > 0 && (
+        <fieldset className="-mt-2 flex flex-col gap-2">
+          <legend className="mb-2 font-semibold">{t("quickPrices")}</legend>
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+            {quickPrices.map((kurus) => {
+              const text = toPriceInput(kurus);
+              return (
+                <button
+                  key={kurus}
+                  type="button"
+                  onClick={() => setPrice(text)}
+                  aria-pressed={price === text}
+                  className="min-h-14 rounded-xl border-2 border-border bg-surface text-lg font-semibold hover:border-primary aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground"
+                >
+                  {text} ₺
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
+      )}
 
       <Field id="rack" label={t("rack")} error={errorText(errors.rack)}>
         <Input

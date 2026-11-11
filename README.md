@@ -77,6 +77,8 @@ src/lib/order-calc.ts  Tag numbers, order status from items, totals (tested)
 src/lib/item-status.ts Status rules for one garment (step 4: canTransition)
 src/lib/orders.ts      Order data access (Supabase)
 src/lib/customers.ts   Customer data access (Supabase)
+src/lib/products.ts    Product names for the item form (Supabase; table price_list_items)
+src/lib/quick-prices.ts  Quick price buttons of the item form (Supabase)
 src/lib/db.ts          The only database client (server only)
 src/app/[locale]/      Pages: admin panel and the public tracking page
 ```
@@ -95,7 +97,8 @@ Required before entering real customer data:
 
 - Which status changes are allowed is decided by `canTransition` in `src/lib/item-status.ts`. "Geri al" is shown for 8 seconds after a change; the server allows undoing only an item's latest change and checks no time limit (spec §8). Undone changes are hidden from the customer's timeline.
 - Customers can be listed, searched and edited (`/admin/customers`, or "Müşteriyi düzenle" on an order). A phone number that belongs to another customer is refused; customers cannot be deleted or merged yet (deletion is planned as anonymization, see KVKK above).
-- No photo upload or price list editing yet (roadmap step 5B and 5C); the `item_photos` table and private `item-photos` bucket exist.
+- Products have no price: the same garment is not always the same price, so the price is typed per item or picked from the quick price buttons. Both are edited at `/admin/products`; products are hidden, never deleted. Order items keep their own copied name and price.
+- No photo upload yet (roadmap step 5C); the `item_photos` table and private `item-photos` bucket exist.
 - All orders are read (page by page, past Supabase's 1000-row limit) and searched in memory: fine for one shop, but slower as orders pile up. Move search and filters into SQL when it gets slow.
 - In production mode the login cookie is HTTPS-only, so `next start` over plain `http://192.168…` cannot keep you logged in. Use `npm run dev` for local demos.
 - `docs/PRD.md` still describes the tailoring project; the spec above takes precedence.

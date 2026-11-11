@@ -25,6 +25,7 @@ import { getOrderDetail } from "@/lib/orders";
 import { formatPhone } from "@/lib/phone";
 import { sortProducts } from "@/lib/product-validation";
 import { listProducts } from "@/lib/products";
+import { listQuickPrices } from "@/lib/quick-prices";
 import type { ItemStatusEvent, OrderItem } from "@/types/order-model";
 
 type Props = PageProps<"/[locale]/admin/orders/[id]">;
@@ -50,6 +51,7 @@ export default async function OrderDetailPage({ params, searchParams }: Props) {
   const tAddItem = await getTranslations("AddItem");
   const format = await getFormatter();
   const products = sortProducts(await listProducts()).filter((product) => product.isActive);
+  const quickPrices = (await listQuickPrices()).map((price) => price.amountKurus);
   const summary = deriveOrderStatus(order.items);
   const total = calculateOrderTotal(order.items, order.expressPercent);
   const missing = getMissingFields(order);
@@ -121,6 +123,7 @@ export default async function OrderDetailPage({ params, searchParams }: Props) {
             key={order.items.length}
             orderId={order.id}
             products={products.map(({ id, name }) => ({ id, name }))}
+            quickPrices={quickPrices}
           />
         </div>
       </details>

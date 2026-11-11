@@ -317,7 +317,19 @@
     "noticeProductAdded": "Ürün eklendi",
     "noticeProductRenamed": "Ürün kaydedildi",
     "noticeProductHidden": "{name} gizlendi",
-    "noticeProductRestored": "{name} geri getirildi"
+    "noticeProductRestored": "{name} geri getirildi",
+    "pricesTitle": "Sık kullanılan fiyatlar",
+    "amount": "Tutar (₺)",
+    "delete": "Sil",
+    "deletePriceLabel": "{price} fiyatını sil",
+    "noPrices": "Henüz fiyat yok. Eklediğiniz fiyatlar parça eklerken buton olarak görünür.",
+    "limitReached": "En fazla 8 fiyat olabilir. Yenisini eklemek için önce birini silin.",
+    "amountRequired": "Tutar gerekli.",
+    "amountInvalid": "Geçerli bir tutar yazın, örneğin 150 veya 150,50.",
+    "duplicate": "Bu fiyat zaten var.",
+    "limit": "En fazla 8 fiyat olabilir.",
+    "noticePriceAdded": "Fiyat eklendi",
+    "noticePriceDeleted": "Fiyat silindi"
   },
   "ProductNotFound": {
     "title": "Ürün bulunamadı",
