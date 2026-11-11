@@ -30,7 +30,16 @@ her seferinde tek bir değişiklik yaparak ilerle. Türkçe konuş.
 4. Durum geçişleri + geri alma ✅  5. Ekranlar (prototipe göre)
 6. Fiş yazdırma + WhatsApp  7. Yayına alma + demo
 
+## Beklemede: 5C leke/hasar fotoğrafı
+Dükkânın cevabı gelene kadar durduruldu (2026-11-12). Konuşulan taslak: amaç hem kanıt hem
+çalışana talimat; "📷 Fotoğraf ekle" butonu sipariş detayında her parçanın kartında; tarayıcı
+1600 px JPEG'e küçültür (EXIF/GPS silinir), server action yükler (bodySizeLimit 3 MB);
+parça başına en fazla 5; fotoğraf notu yok; silme onay ister; migration 0006 bucket'a
+2 MB + image/jpeg kuralı ekler. Tablo `item_photos` ve gizli bucket 0001'de hazır.
+
 ## Dükkâna sorulacaklar (henüz cevapsız)
 Temizlik dükkânda mı, merkezi tesiste mi? Etiket sistemi? Bilgisayar/tablet var mı?
 Veresiye var mı? Kâğıt fiş mi, WhatsApp linki mi? Gerçek fiyat listesi?
 Kaç hızlı fiyat butonu (şimdilik en fazla 8)? Ürünler alfabetik mi, en çok kullanılan üstte mi?
+Leke/hasar fotoğrafı (5C, beklemede): gerçekten kullanır mısınız? Tezgâhta kameralı cihaz (telefon/tablet) var mı?
+Fotoğrafı temizliği yapan kişi nerede görecek?
