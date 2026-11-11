@@ -1,27 +1,27 @@
 import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { getFormatter, getTranslations } from "next-intl/server";
+import { AddItemForm } from "@/components/admin/AddItemForm";
 import { DueBadge } from "@/components/admin/DueBadge";
+import { ItemList } from "@/components/admin/ItemList";
 import { MissingFieldChips } from "@/components/admin/MissingFieldChips";
-import { StatusControls } from "@/components/admin/StatusControls";
 import { TrackingCard } from "@/components/admin/TrackingCard";
 import { WhatsAppCard } from "@/components/admin/WhatsAppCard";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { StatusTimeline } from "@/components/ui/StatusTimeline";
-import { localeNames } from "@/i18n/locale-names";
 import { Link } from "@/i18n/navigation";
 import { initPageLocale } from "@/i18n/page-locale";
 import { requireAdmin } from "@/lib/auth";
+import { calculateOrderTotal, deriveOrderStatus } from "@/lib/order-calc";
 import {
   dateOnlyToDate,
   getDueState,
   getMissingFields,
   todayInShop,
 } from "@/lib/order-utils";
-import { getOrderWithHistory } from "@/lib/orders";
+import { getOrderDetail } from "@/lib/orders";
 import { formatPhone } from "@/lib/phone";
-import { getAllServices } from "@/lib/services";
+import { listActivePriceListItems } from "@/lib/price-list";
 
 type Props = PageProps<"/[locale]/admin/orders/[id]">;
 
@@ -30,22 +30,22 @@ type Props = PageProps<"/[locale]/admin/orders/[id]">;
 
 // The order id is only known at request time; loading.tsx shows a placeholder meanwhile.
 export default async function OrderDetailPage({ params, searchParams }: Props) {
-  const locale = await initPageLocale(params);
+  await initPageLocale(params);
   await requireAdmin();
   const { id } = await params;
-  // Set by the forms after saving, to show a confirmation ("created", "saved" or "status").
+  // Set by the forms after saving, to show a confirmation.
   const { notice } = await searchParams;
 
-  const result = await getOrderWithHistory(id);
+  const result = await getOrderDetail(id);
   if (!result) notFound();
-  const { order, history } = result;
+  const { order, events } = result;
 
   const t = await getTranslations("OrderDetail");
-  const tStatus = await getTranslations("Status");
+  const tAddItem = await getTranslations("AddItem");
   const format = await getFormatter();
-  const service = (await getAllServices()).find(
-    (candidate) => candidate.id === order.serviceId,
-  );
+  const priceList = await listActivePriceListItems();
+  const summary = deriveOrderStatus(order.items);
+  const total = calculateOrderTotal(order.items, order.expressPercent);
   const missing = getMissingFields(order);
 
   return (
@@ -57,9 +57,15 @@ export default async function OrderDetailPage({ params, searchParams }: Props) {
       <header className="flex flex-col gap-2">
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-3xl font-bold">#{order.orderNumber}</h1>
-          <StatusBadge status={order.status} />
+          <StatusBadge status={summary.status} />
+          {order.expressPercent !== null && (
+            <span className="rounded-full bg-red-700 px-3 py-1 font-bold text-white">
+              {t("express")}
+            </span>
+          )}
         </div>
-        <p className="text-xl">{order.customerName}</p>
+        <p className="text-xl">{order.customer.name}</p>
+        {summary.partiallyDelivered && <p className="text-muted">{t("partiallyDelivered")}</p>}
       </header>
 
       {notice === "created" && (
@@ -68,49 +74,59 @@ export default async function OrderDetailPage({ params, searchParams }: Props) {
         </Notice>
       )}
       {notice === "saved" && <Notice title={t("noticeSaved")} />}
-      {notice === "status" && (
-        <Notice title={t("noticeStatus", { status: tStatus(order.status) })} />
-      )}
-
-      <section className="flex flex-col gap-3">
-        <h2 className="text-2xl font-bold">{t("statusTitle")}</h2>
-        <StatusControls orderId={order.id} status={order.status} />
-      </section>
-
-      <WhatsAppCard order={order} />
-
-      <TrackingCard
-        orderNumber={order.orderNumber}
-        trackingToken={order.trackingToken}
-        customerLanguage={order.customerLanguage}
-      />
-
-      {missing.length > 0 && (
-        <div className="flex flex-col gap-3 rounded-xl border-2 border-dashed border-amber-500 bg-amber-50 p-4">
-          <p className="font-semibold">{t("missingTitle")}</p>
-          <MissingFieldChips fields={missing} />
-          <ButtonLink href={`/admin/orders/${order.id}/edit`} className="self-start">
-            {t("edit")}
-          </ButtonLink>
+      {notice === "status" && <Notice title={t("noticeStatus")} />}
+      {notice === "itemAdded" && <Notice title={t("noticeItemAdded")} />}
+      {notice === "conflict" && (
+        <div role="alert" className="rounded-xl bg-amber-100 p-4 text-lg font-bold text-amber-950">
+          {t("noticeConflict")}
         </div>
       )}
 
-      <DetailSection title={t("customer")}>
-        <DetailRow label={t("name")}>{order.customerName}</DetailRow>
-        <DetailRow label={t("phone")}>
-          <a href={`tel:${order.customerPhone}`} className="font-medium underline">
-            {formatPhone(order.customerPhone)}
-          </a>
-        </DetailRow>
-        <DetailRow label={t("language")}>{localeNames[order.customerLanguage]}</DetailRow>
-      </DetailSection>
+      <section className="flex flex-col gap-3">
+        <h2 className="text-2xl font-bold">{t("items")}</h2>
+        <ItemList
+          orderId={order.id}
+          orderNumber={order.orderNumber}
+          items={order.items}
+          events={events}
+        />
+      </section>
+
+      <details className="rounded-xl border-2 border-primary bg-surface" open={order.items.length === 0}>
+        <summary className="flex min-h-14 cursor-pointer items-center px-4 text-xl font-bold text-primary">
+          + {tAddItem("title")}
+        </summary>
+        <div className="border-t border-border p-4">
+          <AddItemForm
+            orderId={order.id}
+            priceList={priceList.map((entry) => ({
+              id: entry.id,
+              label: `${entry.name} · ${format.number(entry.priceKurus / 100, "price")}`,
+            }))}
+          />
+        </div>
+      </details>
 
       <DetailSection title={t("order")}>
-        <DetailRow label={t("service")} empty={t("notFilled")}>
-          {service?.name[locale]}
+        <DetailRow label={t("total")}>
+          {total.kind === "complete" ? (
+            <strong>{format.number(total.kurus / 100, "price")}</strong>
+          ) : (
+            <span className="font-semibold text-amber-800">{t("totalIncomplete")}</span>
+          )}
         </DetailRow>
-        <DetailRow label={t("clothingType")} empty={t("notFilled")}>
-          {order.clothingType}
+        <DetailRow label={t("express")}>
+          {order.expressPercent !== null
+            ? t("expressYes", { percent: order.expressPercent })
+            : t("expressNo")}
+        </DetailRow>
+        <DetailRow label={t("estimatedReadyDate")} empty={t("notFilled")}>
+          {order.estimatedReadyDate && (
+            <span className="flex flex-wrap items-center gap-2">
+              {format.dateTime(dateOnlyToDate(order.estimatedReadyDate), "dateLong")}
+              <DueBadge state={getDueState(order, todayInShop())} />
+            </span>
+          )}
         </DetailRow>
         <DetailRow label={t("publicDescription")} empty={t("notFilled")}>
           {order.publicDescription}
@@ -122,30 +138,43 @@ export default async function OrderDetailPage({ params, searchParams }: Props) {
             </span>
           )}
         </DetailRow>
-        <DetailRow label={t("price")} empty={t("notFilled")}>
-          {order.priceCents !== null && format.number(order.priceCents / 100, "price")}
-        </DetailRow>
-        <DetailRow label={t("estimatedReadyDate")} empty={t("notFilled")}>
-          {order.estimatedReadyDate && (
-            <span className="flex flex-wrap items-center gap-2">
-              {format.dateTime(dateOnlyToDate(order.estimatedReadyDate), "dateLong")}
-              <DueBadge state={getDueState(order, todayInShop())} />
-            </span>
-          )}
-        </DetailRow>
         <DetailRow label={t("createdAt")}>
           {format.dateTime(new Date(order.createdAt), "dateTime")}
         </DetailRow>
       </DetailSection>
 
+      {missing.length > 0 && (
+        <div className="flex flex-col gap-3 rounded-xl border-2 border-dashed border-amber-500 bg-amber-50 p-4">
+          <p className="font-semibold">{t("missingTitle")}</p>
+          <MissingFieldChips fields={missing} />
+        </div>
+      )}
+
       <ButtonLink href={`/admin/orders/${order.id}/edit`} variant="secondary">
         {t("edit")}
       </ButtonLink>
 
-      <section className="flex flex-col gap-4">
-        <h2 className="text-2xl font-bold">{t("history")}</h2>
-        <StatusTimeline entries={history} />
-      </section>
+      <WhatsAppCard
+        status={summary.status}
+        orderNumber={order.orderNumber}
+        trackingToken={order.trackingToken}
+        customerName={order.customer.name}
+        customerPhone={order.customer.phone}
+      />
+
+      <TrackingCard orderNumber={order.orderNumber} trackingToken={order.trackingToken} />
+
+      <DetailSection title={t("customer")}>
+        <DetailRow label={t("name")}>{order.customer.name}</DetailRow>
+        <DetailRow label={t("phone")}>
+          <a href={`tel:${order.customer.phone}`} className="font-medium underline">
+            {formatPhone(order.customer.phone)}
+          </a>
+        </DetailRow>
+        <DetailRow label={t("preferenceNote")} empty={t("notFilled")}>
+          {order.customer.preferenceNote}
+        </DetailRow>
+      </DetailSection>
     </div>
   );
 }

@@ -9,7 +9,6 @@ import { StatusTimeline } from "@/components/ui/StatusTimeline";
 import { initPageLocale } from "@/i18n/page-locale";
 import { dateOnlyToDate, isOpen } from "@/lib/order-utils";
 import { getPublicOrderByToken } from "@/lib/orders";
-import { getAllServices } from "@/lib/services";
 import { shop, shopAddressLine, shopMapsUrl, shopWhatsAppUrl } from "@/lib/shop";
 
 type Props = PageProps<"/[locale]/track/[token]">;
@@ -32,10 +31,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function TrackingPage({ params }: Props) {
-  const locale = await initPageLocale(params);
+  await initPageLocale(params);
   const { token } = await params;
 
-  // Only safe, public fields come back (see getPublicOrderByToken).
+  // Only the fields the customer may see come back (see getPublicOrderByToken).
   const order = await getPublicOrderByToken(token);
   if (!order) notFound();
 
@@ -43,9 +42,9 @@ export default async function TrackingPage({ params }: Props) {
   const tCommon = await getTranslations("Common");
   const tContact = await getTranslations("Contact");
   const format = await getFormatter();
-  const service = (await getAllServices()).find((item) => item.id === order.serviceId);
+  const { summary } = order;
   // The expected date only matters while the work is not finished.
-  const readyDate = isOpen(order.status) ? order.estimatedReadyDate : null;
+  const readyDate = isOpen(summary.status) ? order.estimatedReadyDate : null;
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-10 px-4 py-14">
@@ -61,9 +60,12 @@ export default async function TrackingPage({ params }: Props) {
         className="flex flex-col gap-3 rounded-2xl border-2 border-accent bg-surface p-6 shadow-sm"
       >
         <div>
-          <StatusBadge status={order.status} />
+          <StatusBadge status={summary.status} />
         </div>
-        <p className="text-2xl font-semibold">{t(order.status)}</p>
+        <p className="text-2xl font-semibold">
+          {summary.noItems ? t("noItems") : t(summary.status)}
+        </p>
+        {summary.partiallyDelivered && <p className="text-lg">{t("partiallyDelivered")}</p>}
         {readyDate && (
           <p className="text-lg">
             {t("expectedReady")}:{" "}
@@ -72,16 +74,39 @@ export default async function TrackingPage({ params }: Props) {
         )}
       </section>
 
-      {(service || order.publicDescription) && (
-        <Section title={t("work")}>
-          {service && <p className="text-lg font-semibold">{service.name[locale]}</p>}
-          {order.publicDescription && <p className="text-lg">{order.publicDescription}</p>}
+      {order.publicDescription && (
+        <Section title={t("description")}>
+          <p className="text-lg">{order.publicDescription}</p>
         </Section>
       )}
 
-      <Section title={t("timeline")}>
-        <StatusTimeline entries={order.timeline} />
-      </Section>
+      {order.items.length > 0 && (
+        <Section title={t("items")}>
+          <ul className="flex flex-col gap-4">
+            {order.items.map((item) => (
+              <li
+                key={item.label}
+                className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-lg font-semibold">
+                    {item.label} · {item.garmentName}
+                  </span>
+                  <StatusBadge status={item.status} />
+                </div>
+                <details>
+                  <summary className="flex min-h-11 cursor-pointer items-center font-semibold text-accent-strong">
+                    {t("timeline")}
+                  </summary>
+                  <div className="mt-3">
+                    <StatusTimeline entries={item.timeline} />
+                  </div>
+                </details>
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
 
       <Section title={t("pickupTitle")}>
         <p>{t("pickupText")}</p>

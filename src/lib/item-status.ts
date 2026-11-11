@@ -2,8 +2,11 @@
 // Roadmap step 4: Pınar writes canTransition(from, to, kind) here, and it replaces canQuickChange.
 import type { ItemStatus } from "@/types/order-model";
 
+/** Statuses that can be a "next step" (each has its own button text). */
+export type NextItemStatus = "CLEANING" | "IRONING" | "READY" | "DELIVERED";
+
 /** The usual next step, or null when the item is finished (DELIVERED) or CANCELLED. */
-export function getNextItemStatus(status: ItemStatus): ItemStatus | null {
+export function getNextItemStatus(status: ItemStatus): NextItemStatus | null {
   switch (status) {
     case "RECEIVED":
       return "CLEANING";

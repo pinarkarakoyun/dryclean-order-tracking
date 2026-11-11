@@ -3,42 +3,41 @@ import { ExternalButtonLink } from "@/components/ui/ButtonLink";
 import { shop, shopAddressLine } from "@/lib/shop";
 import { getTrackingUrl } from "@/lib/tracking";
 import { buildWhatsAppUrl } from "@/lib/whatsapp";
-import type { Order } from "@/types/order";
+import type { ItemStatus } from "@/types/order-model";
 
 type WhatsAppCardProps = {
-  order: Pick<
-    Order,
-    | "orderNumber"
-    | "trackingToken"
-    | "customerName"
-    | "customerPhone"
-    | "customerLanguage"
-    | "status"
-  >;
+  /** The order status derived from its items. */
+  status: ItemStatus;
+  orderNumber: number;
+  trackingToken: string;
+  customerName: string;
+  customerPhone: string;
 };
 
 /**
- * Prepared WhatsApp message: "ready for pickup" when the order is ready,
+ * Prepared WhatsApp message: "ready" when the order is ready,
  * otherwise the tracking link (useful when there is no printer for the QR code).
  */
-export async function WhatsAppCard({ order }: WhatsAppCardProps) {
+export async function WhatsAppCard({
+  status,
+  orderNumber,
+  trackingToken,
+  customerName,
+  customerPhone,
+}: WhatsAppCardProps) {
   // Nothing to tell the customer about finished or cancelled orders.
-  if (order.status === "DELIVERED" || order.status === "CANCELLED") return null;
+  if (status === "DELIVERED" || status === "CANCELLED") return null;
 
   const t = await getTranslations("OrderDetail");
-  // The message uses the CUSTOMER's language, not the language of the admin panel.
-  const tMessage = await getTranslations({
-    locale: order.customerLanguage,
-    namespace: "WhatsAppMessage",
-  });
+  const tMessage = await getTranslations("WhatsAppMessage");
 
-  const isReady = order.status === "READY_FOR_PICKUP";
+  const isReady = status === "READY";
   const values = {
-    name: order.customerName.split(/\s+/)[0],
-    number: order.orderNumber,
+    name: customerName.split(/\s+/)[0],
+    number: orderNumber,
     shop: shop.fullName,
     address: shopAddressLine(),
-    link: await getTrackingUrl(order.trackingToken, order.customerLanguage),
+    link: await getTrackingUrl(trackingToken),
   };
   const message = isReady ? tMessage("ready", values) : tMessage("tracking", values);
 
@@ -52,7 +51,7 @@ export async function WhatsAppCard({ order }: WhatsAppCardProps) {
       <p className="text-muted">{t("whatsappHint")}</p>
 
       <ExternalButtonLink
-        href={buildWhatsAppUrl(order.customerPhone, message)}
+        href={buildWhatsAppUrl(customerPhone, message)}
         target="_blank"
         rel="noopener noreferrer"
         variant={isReady ? "success" : "secondary"}

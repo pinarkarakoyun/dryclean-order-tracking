@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import QRCode from "qrcode";
 import { getPathname } from "@/i18n/navigation";
-import type { Locale } from "@/i18n/routing";
+import { routing } from "@/i18n/routing";
 
 /**
  * Base URL of the site, e.g. "https://example.com".
@@ -17,9 +17,9 @@ async function getSiteUrl(): Promise<string> {
   return `${protocol}://${host}`;
 }
 
-/** Full tracking link in the customer's language, e.g. ".../track/<token>". */
-export async function getTrackingUrl(token: string, locale: Locale): Promise<string> {
-  const path = getPathname({ href: `/track/${token}`, locale });
+/** Full tracking link, e.g. "https://example.com/track/<token>" (Turkish only). */
+export async function getTrackingUrl(token: string): Promise<string> {
+  const path = getPathname({ href: `/track/${token}`, locale: routing.defaultLocale });
   return `${await getSiteUrl()}${path}`;
 }
 

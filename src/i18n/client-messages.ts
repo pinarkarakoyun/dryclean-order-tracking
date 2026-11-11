@@ -18,6 +18,7 @@ export const ADMIN_CLIENT_NAMESPACES = [
   "NewOrder",
   "EditOrder",
   "OrderDetail",
+  "AddItem",
 ] as const satisfies readonly Namespace[];
 
 export async function getClientMessages(

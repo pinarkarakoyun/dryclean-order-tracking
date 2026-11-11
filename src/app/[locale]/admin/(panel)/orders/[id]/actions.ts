@@ -3,29 +3,127 @@
 import { getLocale } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
 import { requireAdmin } from "@/lib/auth";
-import { changeOrderStatus } from "@/lib/orders";
-import { readText } from "@/lib/order-validation";
-import { ORDER_STATUSES } from "@/types/order";
+import { canQuickChange } from "@/lib/item-status";
+import { LIMITS } from "@/lib/order-limits";
+import {
+  parsePriceToCents,
+  readText,
+  validateOptionalText,
+} from "@/lib/order-validation";
+import { addOrderItem, changeItemStatus } from "@/lib/orders";
+import { getPriceListItem } from "@/lib/price-list";
+import { ITEM_STATUSES } from "@/types/order-model";
 
-/** Called by the status buttons on the order detail page. */
-export async function changeStatusAction(formData: FormData): Promise<void> {
+/** Called by the status buttons of one garment on the order detail page. */
+export async function changeItemStatusAction(formData: FormData): Promise<void> {
+  // Server Actions are public endpoints: always check the login again here.
   await requireAdmin();
-
-  const orderId = readText(formData, "orderId");
-  const rawStatus = readText(formData, "status");
-  // Only the five known statuses are accepted.
-  const status = ORDER_STATUSES.find((value) => value === rawStatus);
   const locale = await getLocale();
 
-  const order = status ? await changeOrderStatus(orderId, status) : null;
-  if (!order) {
-    redirect({ href: "/admin/orders", locale });
+  const orderId = readText(formData, "orderId");
+  const itemId = readText(formData, "itemId");
+  // Only known statuses are accepted.
+  const expected = ITEM_STATUSES.find((value) => value === readText(formData, "expectedStatus"));
+  const target = ITEM_STATUSES.find((value) => value === readText(formData, "toStatus"));
+  const detail = (notice?: string) => ({
+    pathname: `/admin/orders/${orderId}`,
+    query: notice ? { notice } : {},
+  });
+
+  // TEMPORARY rule until step 4 (canTransition): only the next step, or cancel.
+  if (!expected || !target || !canQuickChange(expected, target)) {
+    redirect({ href: detail(), locale });
     return;
   }
 
-  // Back to the detail page (fresh data), with a confirmation message.
+  const result = await changeItemStatus({
+    itemId,
+    expectedStatus: expected,
+    toStatus: target,
+    kind: "normal",
+  });
+
+  if (result === "not_found") {
+    redirect({ href: "/admin/orders", locale });
+    return;
+  }
+  redirect({ href: detail(result === "conflict" ? "conflict" : "status"), locale });
+}
+
+export type AddItemErrorKey = "nameRequired" | "itemInvalid" | "tooLong" | "priceInvalid";
+
+export type AddItemState = {
+  errors: Partial<Record<"item" | "price" | "rack" | "note", AddItemErrorKey>>;
+  /** What the user typed, so the form keeps it after an error. */
+  values: { priceListItemId: string; customName: string; price: string; rack: string; note: string };
+};
+
+/** Adds a garment to an order: from the price list, or typed by hand. */
+export async function addItemAction(
+  _previousState: AddItemState,
+  formData: FormData,
+): Promise<AddItemState> {
+  await requireAdmin();
+  const locale = await getLocale();
+
+  const orderId = readText(formData, "orderId");
+  const values = {
+    priceListItemId: readText(formData, "priceListItemId"),
+    customName: readText(formData, "customName"),
+    price: readText(formData, "price"),
+    rack: readText(formData, "rack"),
+    note: readText(formData, "note"),
+  };
+
+  const rack = validateOptionalText(values.rack, LIMITS.rackLocation);
+  const note = validateOptionalText(values.note, LIMITS.itemNote);
+  const errors: AddItemState["errors"] = { rack: rack.error, note: note.error };
+
+  let garmentName: string | null = null;
+  let unitPriceKurus: number | null = null;
+  let priceListItemId: string | null = null;
+
+  if (values.priceListItemId) {
+    // Name and price come from the database, never from the form.
+    const listItem = await getPriceListItem(values.priceListItemId);
+    if (!listItem || !listItem.isActive) {
+      errors.item = "itemInvalid";
+    } else {
+      garmentName = listItem.name;
+      unitPriceKurus = listItem.priceKurus;
+      priceListItemId = listItem.id;
+    }
+  } else if (!values.customName) {
+    errors.item = "nameRequired";
+  } else if (values.customName.length > LIMITS.garmentName) {
+    errors.item = "tooLong";
+  } else {
+    garmentName = values.customName;
+    const price = parsePriceToCents(values.price);
+    if (price.error) errors.price = price.error;
+    else unitPriceKurus = price.value;
+  }
+
+  if (Object.values(errors).some(Boolean) || garmentName === null) {
+    return { errors, values };
+  }
+
+  const item = await addOrderItem({
+    orderId,
+    garmentName,
+    priceListItemId,
+    unitPriceKurus,
+    rackLocation: rack.value ?? null,
+    note: note.value ?? null,
+  });
+  if (!item) {
+    redirect({ href: "/admin/orders", locale });
+    return { errors: {}, values };
+  }
+
   redirect({
-    href: { pathname: `/admin/orders/${order.id}`, query: { notice: "status" } },
+    href: { pathname: `/admin/orders/${orderId}`, query: { notice: "itemAdded" } },
     locale,
   });
+  return { errors: {}, values };
 }

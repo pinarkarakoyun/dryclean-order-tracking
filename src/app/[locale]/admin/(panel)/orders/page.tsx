@@ -10,8 +10,7 @@ import { Link } from "@/i18n/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { todayInShop } from "@/lib/order-utils";
 import { searchOrders } from "@/lib/orders";
-import { getAllServices } from "@/lib/services";
-import { ORDER_STATUSES, type OrderStatus } from "@/types/order";
+import { ITEM_STATUSES, type ItemStatus } from "@/types/order-model";
 
 const MAX_QUERY_LENGTH = 100;
 
@@ -55,16 +54,13 @@ async function OrdersContent({ searchParams }: { searchParams: SearchParams }) {
   // Validate URL input on the server: unknown values are ignored.
   const { q, status: rawStatus } = await searchParams;
   const query = typeof q === "string" ? q.trim().slice(0, MAX_QUERY_LENGTH) : "";
-  const status = ORDER_STATUSES.find((value) => value === rawStatus);
+  const status = ITEM_STATUSES.find((value) => value === rawStatus);
 
-  const [orders, services] = await Promise.all([
-    searchOrders({ query, status }),
-    getAllServices(),
-  ]);
+  const orders = await searchOrders({ query, status });
   const today = todayInShop();
 
   // Builds a filter link that keeps the current search text.
-  const filterHref = (filterStatus?: OrderStatus) => ({
+  const filterHref = (filterStatus?: ItemStatus) => ({
     pathname: "/admin/orders",
     query: {
       ...(query && { q: query }),
@@ -93,7 +89,7 @@ async function OrdersContent({ searchParams }: { searchParams: SearchParams }) {
 
       <nav aria-label={t("filterLabel")}>
         <ul className="flex flex-wrap gap-2">
-          {[undefined, ...ORDER_STATUSES].map((filterStatus) => {
+          {[undefined, ...ITEM_STATUSES].map((filterStatus) => {
             const isActive = filterStatus === status;
             return (
               <li key={filterStatus ?? "all"}>
@@ -123,7 +119,6 @@ async function OrdersContent({ searchParams }: { searchParams: SearchParams }) {
           <OrderCard
             key={order.id}
             order={order}
-            service={services.find((service) => service.id === order.serviceId)}
             today={today}
             showMissing
           />

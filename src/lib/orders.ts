@@ -1,61 +1,158 @@
-import { randomUUID } from "node:crypto";
 import { connection } from "next/server";
-import type { Locale } from "@/i18n/routing";
-import type { Order, OrderStatus, PublicOrder, StatusChange } from "@/types/order";
-import { createSeedData } from "./mock-data";
+import type {
+  ItemStatus,
+  ItemStatusEvent,
+  Order,
+  OrderItem,
+  OrderWithDetails,
+  PublicOrder,
+  StatusEventKind,
+} from "@/types/order-model";
+import { toCustomer, type CustomerRow } from "./customers";
+import { getDb } from "./db";
+import { isUuid } from "./ids";
+import { deriveOrderStatus, parseTagLabel, tagLabel } from "./order-calc";
 import { generateTrackingToken } from "./token";
 
-// THE single place for order data access.
-// Prototype: data lives in server memory and resets when the server restarts.
-// Later, only the inside of this file changes to use a real database (Supabase/PostgreSQL).
+// THE single place for order data access (Supabase/PostgreSQL).
+// Writes that touch several tables call the database functions from supabase/migrations/0003_rpc.sql.
+// The service_role key bypasses RLS: admin callers must run requireAdmin() first, and the
+// public tracking query selects only the fields the customer may see.
 
-type Store = {
-  orders: Order[];
-  statusChanges: StatusChange[];
+type OrderRow = {
+  id: string;
+  order_number: number;
+  tracking_token: string;
+  customer_id: string;
+  express_percent: number | null;
+  estimated_ready_date: string | null;
+  public_description: string | null;
+  internal_note: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
-// Kept on globalThis so it survives hot reloads in development.
-const globalForStore = globalThis as unknown as { dcStore?: Store };
+type ItemRow = {
+  id: string;
+  order_id: string;
+  item_no: number;
+  price_list_item_id: string | null;
+  garment_name: string;
+  unit_price_kurus: number | null;
+  rack_location: string | null;
+  note: string | null;
+  status: ItemStatus;
+  created_at: string;
+  updated_at: string;
+};
 
-async function getStore(): Promise<Store> {
-  // Mock data can change at any time, so tell Next.js to read it on every
-  // request instead of baking it into a pre-rendered page.
-  await connection();
-  globalForStore.dcStore ??= createSeedData(new Date());
-  return globalForStore.dcStore;
+type EventRow = {
+  id: number;
+  item_id: string;
+  from_status: ItemStatus | null;
+  to_status: ItemStatus;
+  kind: StatusEventKind;
+  changed_at: string;
+};
+
+type OrderDetailsRow = OrderRow & { customer: CustomerRow; items: ItemRow[] };
+
+const DETAILS = "*, customer:customers(*), items:order_items(*)";
+
+function toOrder(row: OrderRow): Order {
+  return {
+    id: row.id,
+    orderNumber: row.order_number,
+    trackingToken: row.tracking_token,
+    customerId: row.customer_id,
+    expressPercent: row.express_percent,
+    estimatedReadyDate: row.estimated_ready_date,
+    publicDescription: row.public_description,
+    internalNote: row.internal_note,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
 }
 
-/** All orders, newest first. Returns copies, like a database would. */
-export async function listOrders(): Promise<Order[]> {
-  const store = await getStore();
-  return structuredClone(store.orders).sort((a, b) =>
-    b.createdAt.localeCompare(a.createdAt),
-  );
+function toItem(row: ItemRow): OrderItem {
+  return {
+    id: row.id,
+    orderId: row.order_id,
+    itemNo: row.item_no,
+    priceListItemId: row.price_list_item_id,
+    garmentName: row.garment_name,
+    unitPriceKurus: row.unit_price_kurus,
+    rackLocation: row.rack_location,
+    note: row.note,
+    status: row.status,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function toEvent(row: EventRow): ItemStatusEvent {
+  return {
+    id: row.id,
+    itemId: row.item_id,
+    fromStatus: row.from_status,
+    toStatus: row.to_status,
+    kind: row.kind,
+    changedAt: row.changed_at,
+  };
+}
+
+function toOrderWithDetails(row: OrderDetailsRow): OrderWithDetails {
+  return {
+    ...toOrder(row),
+    customer: toCustomer(row.customer),
+    items: row.items.map(toItem).sort((a, b) => a.itemNo - b.itemNo),
+  };
+}
+
+function fail(what: string, message: string): never {
+  throw new Error(`Database error (${what}): ${message}`);
+}
+
+/** All orders with customer and items, newest first. */
+export async function listOrders(): Promise<OrderWithDetails[]> {
+  await connection();
+  const { data, error } = await getDb()
+    .from("orders")
+    .select(DETAILS)
+    .order("created_at", { ascending: false })
+    .returns<OrderDetailsRow[]>();
+  if (error) fail("orders", error.message);
+  return data.map(toOrderWithDetails);
 }
 
 export type OrderSearch = {
-  /** Free text: customer name, phone number or order number. */
+  /** Free text: customer name, phone number, order number or tag number ("1048-1"). */
   query?: string;
-  status?: OrderStatus;
+  /** Compared with the status derived from the items. */
+  status?: ItemStatus;
 };
 
-/** Orders matching the search, newest first. (With a database this becomes a SQL query.) */
-export async function searchOrders({
-  query = "",
-  status,
-}: OrderSearch): Promise<Order[]> {
+/** Orders matching the search, newest first. Filtered in memory: fine for one shop's volume. */
+export async function searchOrders({ query = "", status }: OrderSearch): Promise<OrderWithDetails[]> {
   const orders = await listOrders();
   const text = normalizeText(query.trim());
+  const tag = parseTagLabel(query);
   // "0532 123 45 67", "+905321234567" and "05321234567" should all find the same phone.
   const digits = query.replace(/\D/g, "").replace(/^0+/, "");
 
   return orders.filter((order) => {
-    if (status && order.status !== status) return false;
+    if (status && deriveOrderStatus(order.items).status !== status) return false;
     if (!text) return true;
+    if (tag) {
+      return (
+        order.orderNumber === tag.orderNumber &&
+        order.items.some((item) => item.itemNo === tag.itemNo)
+      );
+    }
     return (
-      normalizeText(order.customerName).includes(text) ||
+      normalizeText(order.customer.name).includes(text) ||
       (digits.length > 0 && String(order.orderNumber).includes(digits)) ||
-      (digits.length >= 4 && order.customerPhone.replace(/\D/g, "").includes(digits))
+      (digits.length >= 4 && order.customer.phone.replace(/\D/g, "").includes(digits))
     );
   });
 }
@@ -69,136 +166,177 @@ function normalizeText(value: string): string {
     .replace(/ı/g, "i");
 }
 
-/** One order with its status history (oldest first), or null if it does not exist. */
-export async function getOrderWithHistory(
+/** One order with customer, items and their status history (oldest first), or null. */
+export async function getOrderDetail(
   id: string,
-): Promise<{ order: Order; history: StatusChange[] } | null> {
-  const store = await getStore();
-  const order = store.orders.find((candidate) => candidate.id === id);
-  if (!order) return null;
+): Promise<{ order: OrderWithDetails; events: ItemStatusEvent[] } | null> {
+  if (!isUuid(id)) return null;
+  await connection();
+  const db = getDb();
 
-  const history = store.statusChanges
-    .filter((change) => change.orderId === id)
-    .sort((a, b) => a.changedAt.localeCompare(b.changedAt));
-  return structuredClone({ order, history });
+  const { data, error } = await db
+    .from("orders")
+    .select(DETAILS)
+    .eq("id", id)
+    .maybeSingle<OrderDetailsRow>();
+  if (error) fail("order", error.message);
+  if (!data) return null;
+
+  const order = toOrderWithDetails(data);
+  const itemIds = order.items.map((item) => item.id);
+  if (itemIds.length === 0) return { order, events: [] };
+
+  const events = await db
+    .from("item_status_events")
+    .select("*")
+    .in("item_id", itemIds)
+    .order("id")
+    .returns<EventRow[]>();
+  if (events.error) fail("status history", events.error.message);
+  return { order, events: events.data.map(toEvent) };
 }
 
-export type NewOrderInput = {
+/** Opens an order. The customer is found by phone, or created. */
+export async function createOrder(input: {
   customerName: string;
   /** Already validated and normalized (E.164). */
   customerPhone: string;
-  customerLanguage: Locale;
-};
-
-/** Creates an order with only the required fields. Everything else can be added later. */
-export async function createOrder(input: NewOrderInput): Promise<Order> {
-  const store = await getStore();
-  const now = new Date().toISOString();
-  // With a database, the number would come from a sequence to avoid duplicates.
-  const lastNumber = Math.max(0, ...store.orders.map((order) => order.orderNumber));
-
-  const order: Order = {
-    id: randomUUID(),
-    orderNumber: lastNumber + 1,
-    trackingToken: generateTrackingToken(),
-    customerName: input.customerName,
-    customerPhone: input.customerPhone,
-    customerLanguage: input.customerLanguage,
-    serviceId: null,
-    clothingType: null,
-    publicDescription: null,
-    internalNote: null,
-    priceCents: null,
-    estimatedReadyDate: null,
-    status: "RECEIVED",
-    createdAt: now,
-    updatedAt: now,
-  };
-
-  store.orders.push(order);
-  // The first history entry: every order starts as RECEIVED.
-  store.statusChanges.push({
-    id: randomUUID(),
-    orderId: order.id,
-    status: "RECEIVED",
-    changedAt: now,
+}): Promise<Order> {
+  const { data, error } = await getDb().rpc("create_order", {
+    p_customer_name: input.customerName,
+    p_customer_phone: input.customerPhone,
+    p_tracking_token: generateTrackingToken(),
   });
-  return structuredClone(order);
+  if (error) fail("create order", error.message);
+  return toOrder(data as OrderRow);
 }
 
-/** Fields the owner can change on the edit page (status has its own function). */
-export type OrderUpdate = Pick<
-  Order,
-  | "customerName"
-  | "customerPhone"
-  | "customerLanguage"
-  | "serviceId"
-  | "clothingType"
-  | "publicDescription"
-  | "internalNote"
-  | "priceCents"
-  | "estimatedReadyDate"
->;
-
-/** Saves edited fields. Input must already be validated. Returns null if the order does not exist. */
+/** Saves the editable order fields. Input must already be validated. False if the order does not exist. */
 export async function updateOrder(
   id: string,
-  update: OrderUpdate,
-): Promise<Order | null> {
-  const store = await getStore();
-  const order = store.orders.find((candidate) => candidate.id === id);
-  if (!order) return null;
+  update: Pick<Order, "expressPercent" | "estimatedReadyDate" | "publicDescription" | "internalNote">,
+): Promise<boolean> {
+  if (!isUuid(id)) return false;
+  const { data, error } = await getDb()
+    .from("orders")
+    .update({
+      express_percent: update.expressPercent,
+      estimated_ready_date: update.estimatedReadyDate,
+      public_description: update.publicDescription,
+      internal_note: update.internalNote,
+    })
+    .eq("id", id)
+    .select("id");
+  if (error) fail("update order", error.message);
+  return data.length > 0;
+}
 
-  Object.assign(order, update, { updatedAt: new Date().toISOString() });
-  return structuredClone(order);
+/** Adds a garment (next item number, status RECEIVED, first history event). Null if the order does not exist. */
+export async function addOrderItem(input: {
+  orderId: string;
+  garmentName: string;
+  priceListItemId: string | null;
+  unitPriceKurus: number | null;
+  rackLocation: string | null;
+  note: string | null;
+}): Promise<OrderItem | null> {
+  if (!isUuid(input.orderId)) return null;
+  const { data, error } = await getDb().rpc("add_order_item", {
+    p_order_id: input.orderId,
+    p_garment_name: input.garmentName,
+    p_price_list_item_id: input.priceListItemId,
+    p_unit_price_kurus: input.unitPriceKurus,
+    p_rack_location: input.rackLocation,
+    p_note: input.note,
+  });
+  if (error) {
+    if (error.message === "order_not_found") return null;
+    fail("add item", error.message);
+  }
+  return toItem(data as ItemRow);
 }
 
 /**
- * Changes the status and records it in the history.
- * Setting the same status again does nothing (e.g. after a double click).
+ * Changes one garment's status and records it (one database transaction).
+ * "conflict": the status changed elsewhere since the screen was loaded.
+ * Business rules (which status may follow which) are checked by the caller first.
  */
-export async function changeOrderStatus(
-  id: string,
-  status: OrderStatus,
-): Promise<Order | null> {
-  const store = await getStore();
-  const order = store.orders.find((candidate) => candidate.id === id);
-  if (!order) return null;
-  if (order.status === status) return structuredClone(order);
-
-  const now = new Date().toISOString();
-  // With a database, these two writes would happen in one transaction.
-  order.status = status;
-  order.updatedAt = now;
-  store.statusChanges.push({ id: randomUUID(), orderId: id, status, changedAt: now });
-  return structuredClone(order);
+export async function changeItemStatus(input: {
+  itemId: string;
+  expectedStatus: ItemStatus;
+  toStatus: ItemStatus;
+  kind: StatusEventKind;
+}): Promise<"ok" | "conflict" | "not_found"> {
+  if (!isUuid(input.itemId)) return "not_found";
+  const { error } = await getDb().rpc("change_item_status", {
+    p_item_id: input.itemId,
+    p_expected_status: input.expectedStatus,
+    p_to_status: input.toStatus,
+    p_kind: input.kind,
+  });
+  if (!error) return "ok";
+  if (error.message === "status_conflict") return "conflict";
+  if (error.message === "item_not_found") return "not_found";
+  fail("change status", error.message);
 }
 
 // Tokens are base64url (see token.ts); demo tokens have a "demo-" prefix.
 const TOKEN_PATTERN = /^[A-Za-z0-9_-]{20,64}$/;
 
+type PublicOrderRow = {
+  order_number: number;
+  public_description: string | null;
+  estimated_ready_date: string | null;
+  customer: { name: string };
+  items: { id: string; item_no: number; garment_name: string; status: ItemStatus }[];
+};
+
 /**
  * Public view of an order for /track/<token>, or null if the token is unknown.
- * Builds a new object with only the allowed fields, so private data can never
- * reach the public page by accident (privacy by design).
+ * Only the allowed columns are queried, and a new object is built from them,
+ * so private data can never reach the public page by accident (spec §11).
  */
 export async function getPublicOrderByToken(token: string): Promise<PublicOrder | null> {
   if (!TOKEN_PATTERN.test(token)) return null;
+  await connection();
+  const db = getDb();
 
-  const store = await getStore();
-  const order = store.orders.find((candidate) => candidate.trackingToken === token);
-  if (!order) return null;
+  const { data, error } = await db
+    .from("orders")
+    .select(
+      "order_number, public_description, estimated_ready_date, customer:customers(name), items:order_items(id, item_no, garment_name, status)",
+    )
+    .eq("tracking_token", token)
+    .maybeSingle<PublicOrderRow>();
+  if (error) fail("tracking", error.message);
+  if (!data) return null;
+
+  const items = [...data.items].sort((a, b) => a.item_no - b.item_no);
+  let events: { item_id: string; to_status: ItemStatus; changed_at: string }[] = [];
+  if (items.length > 0) {
+    const result = await db
+      .from("item_status_events")
+      .select("item_id, to_status, changed_at")
+      .in("item_id", items.map((item) => item.id))
+      .order("id")
+      .returns<typeof events>();
+    if (result.error) fail("tracking history", result.error.message);
+    events = result.data;
+  }
 
   return {
-    orderNumber: order.orderNumber,
-    firstName: order.customerName.split(/\s+/)[0],
-    serviceId: order.serviceId,
-    publicDescription: order.publicDescription,
-    status: order.status,
-    estimatedReadyDate: order.estimatedReadyDate,
-    timeline: store.statusChanges
-      .filter((change) => change.orderId === order.id)
-      .sort((a, b) => a.changedAt.localeCompare(b.changedAt))
-      .map(({ status, changedAt }) => ({ status, changedAt })),
+    orderNumber: data.order_number,
+    firstName: data.customer.name.split(/\s+/)[0],
+    publicDescription: data.public_description,
+    estimatedReadyDate: data.estimated_ready_date,
+    summary: deriveOrderStatus(items),
+    items: items.map((item) => ({
+      label: tagLabel(data.order_number, item.item_no),
+      garmentName: item.garment_name,
+      status: item.status,
+      timeline: events
+        .filter((event) => event.item_id === item.id)
+        .map((event) => ({ status: event.to_status, changedAt: event.changed_at })),
+    })),
   };
 }

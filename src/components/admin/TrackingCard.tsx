@@ -1,20 +1,15 @@
 import { getTranslations } from "next-intl/server";
 import { ExternalButtonLink } from "@/components/ui/ButtonLink";
 import { createQrCodeDataUrl, getTrackingUrl } from "@/lib/tracking";
-import type { Order } from "@/types/order";
+import type { Order } from "@/types/order-model";
 import { CopyLinkButton } from "./CopyLinkButton";
 
-type TrackingCardProps = Pick<Order, "orderNumber" | "trackingToken" | "customerLanguage">;
+type TrackingCardProps = Pick<Order, "orderNumber" | "trackingToken">;
 
 /** QR code and link the customer uses to follow the order. */
-export async function TrackingCard({
-  orderNumber,
-  trackingToken,
-  customerLanguage,
-}: TrackingCardProps) {
+export async function TrackingCard({ orderNumber, trackingToken }: TrackingCardProps) {
   const t = await getTranslations("OrderDetail");
-  // The link opens in the customer's language, not the admin's.
-  const url = await getTrackingUrl(trackingToken, customerLanguage);
+  const url = await getTrackingUrl(trackingToken);
   const qrCode = await createQrCodeDataUrl(url);
 
   return (

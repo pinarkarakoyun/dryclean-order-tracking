@@ -8,22 +8,17 @@ import {
 } from "@/app/[locale]/admin/(panel)/orders/new/actions";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { localeNames } from "@/i18n/locale-names";
-import { routing } from "@/i18n/routing";
 import { LIMITS } from "@/lib/order-limits";
 
 const initialState: NewOrderState = {
   errors: {},
-  values: { name: "", phone: "", language: routing.defaultLocale },
+  values: { name: "", phone: "" },
 };
 
 export function NewOrderForm() {
   const t = useTranslations("NewOrder");
-  const [state, formAction, isPending] = useActionState(
-    createOrderAction,
-    initialState,
-  );
-  const { errors, values } = state;
+  const [state, formAction, isPending] = useActionState(createOrderAction, initialState);
+  const { errors, values, existingCustomerName, confirmPhone } = state;
 
   return (
     // noValidate: the server checks the input and shows clear, translated messages.
@@ -66,30 +61,22 @@ export function NewOrderForm() {
         {errors.phone && <FieldError id="phone-error">{t(errors.phone)}</FieldError>}
       </div>
 
-      <fieldset className="flex flex-col gap-2">
-        <legend className="mb-2 text-lg font-semibold">{t("language")}</legend>
-        <div className="grid grid-cols-3 gap-2">
-          {routing.locales.map((locale) => (
-            <label key={locale} className="cursor-pointer">
-              {/* Real radio buttons (keyboard and screen reader friendly), styled as big buttons. */}
-              <input
-                type="radio"
-                name="language"
-                value={locale}
-                defaultChecked={values.language === locale}
-                className="peer sr-only"
-              />
-              <span className="flex min-h-14 items-center justify-center rounded-xl border-2 border-border bg-surface px-2 text-center font-semibold peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:outline-4 peer-focus-visible:outline-primary">
-                {localeNames[locale]}
-              </span>
-            </label>
-          ))}
+      {existingCustomerName ? (
+        // The phone belongs to a known customer with another name: confirm before opening.
+        <div role="alert" className="flex flex-col gap-3 rounded-xl bg-amber-100 p-4 text-amber-950">
+          <p className="text-lg font-semibold">
+            {t("existingCustomer", { name: existingCustomerName })}
+          </p>
+          <input type="hidden" name="confirmPhone" value={confirmPhone} />
+          <Button type="submit" disabled={isPending}>
+            {isPending ? t("submitting") : t("confirmExisting", { name: existingCustomerName })}
+          </Button>
         </div>
-      </fieldset>
-
-      <Button type="submit" disabled={isPending}>
-        {isPending ? t("submitting") : t("submit")}
-      </Button>
+      ) : (
+        <Button type="submit" disabled={isPending}>
+          {isPending ? t("submitting") : t("submit")}
+        </Button>
+      )}
     </form>
   );
 }

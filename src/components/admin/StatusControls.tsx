@@ -1,71 +1,79 @@
 import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
-import { changeStatusAction } from "@/app/[locale]/admin/(panel)/orders/[id]/actions";
+import { changeItemStatusAction } from "@/app/[locale]/admin/(panel)/orders/[id]/actions";
 import { SubmitButton } from "@/components/ui/SubmitButton";
-import { getNextStatus } from "@/lib/order-utils";
-import { ORDER_STATUSES, type OrderStatus } from "@/types/order";
+import { canQuickChange, getNextItemStatus } from "@/lib/item-status";
+import type { ItemStatus } from "@/types/order-model";
 
 type StatusControlsProps = {
   orderId: string;
-  status: OrderStatus;
+  itemId: string;
+  status: ItemStatus;
 };
 
 /**
- * One big button for the usual next step, plus all other statuses
- * behind "Choose another status" (to fix mistakes or cancel).
- * Plain forms: they work without JavaScript too.
+ * Status buttons for one garment: one big button for the usual next step,
+ * and "Cancel" behind "Other options". Plain forms: they work without JavaScript too.
+ * Undo and "move back one step" come in roadmap step 4.
  */
-export function StatusControls({ orderId, status }: StatusControlsProps) {
+export function StatusControls({ orderId, itemId, status }: StatusControlsProps) {
   const t = useTranslations("OrderDetail");
   const tAction = useTranslations("StatusAction");
-  const tStatus = useTranslations("Status");
 
-  const next = getNextStatus(status);
-  const others = ORDER_STATUSES.filter((value) => value !== status && value !== next);
+  const next = getNextItemStatus(status);
+  const canCancel = canQuickChange(status, "CANCELLED");
+  if (!next && !canCancel) return null;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       {next && (
-        <StatusForm orderId={orderId} status={next}>
+        <StatusForm orderId={orderId} itemId={itemId} expected={status} target={next}>
           <SubmitButton className="w-full" pendingText="…">
             {tAction(next)}
           </SubmitButton>
         </StatusForm>
       )}
 
-      {/* <details> opens and closes without any JavaScript. */}
-      <details className="rounded-xl border border-border bg-surface">
-        <summary className="flex min-h-14 cursor-pointer items-center px-4 font-semibold text-primary">
-          {t("otherStatus")}
-        </summary>
-        <div className="flex flex-col gap-3 border-t border-border p-4">
-          <p className="text-muted">{t("otherStatusHint")}</p>
-          {others.map((value) => (
-            <StatusForm key={value} orderId={orderId} status={value}>
+      {canCancel && (
+        // <details> opens and closes without any JavaScript.
+        <details className="rounded-xl border border-border bg-surface">
+          <summary className="flex min-h-12 cursor-pointer items-center px-4 font-semibold text-primary">
+            {t("otherStatus")}
+          </summary>
+          <div className="flex flex-col gap-3 border-t border-border p-4">
+            <p className="text-muted">{t("otherStatusHint")}</p>
+            <StatusForm orderId={orderId} itemId={itemId} expected={status} target="CANCELLED">
               <SubmitButton variant="secondary" className="w-full" pendingText="…">
-                {t("setStatus", { status: tStatus(value) })}
+                {tAction("CANCELLED")}
               </SubmitButton>
             </StatusForm>
-          ))}
-        </div>
-      </details>
+          </div>
+        </details>
+      )}
     </div>
   );
 }
 
 function StatusForm({
   orderId,
-  status,
+  itemId,
+  expected,
+  target,
   children,
 }: {
   orderId: string;
-  status: OrderStatus;
+  itemId: string;
+  /** The status shown on screen: the database rejects the change if it moved on meanwhile. */
+  expected: ItemStatus;
+  target: ItemStatus;
   children: ReactNode;
 }) {
   return (
-    <form action={changeStatusAction}>
+    <form action={changeItemStatusAction}>
       <input type="hidden" name="orderId" value={orderId} />
-      <input type="hidden" name="status" value={status} />
+      <input type="hidden" name="itemId" value={itemId} />
+      <input type="hidden" name="expectedStatus" value={expected} />
+      <input type="hidden" name="toStatus" value={target} />
       {children}
     </form>
   );

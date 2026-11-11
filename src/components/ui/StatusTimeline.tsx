@@ -1,8 +1,8 @@
 import { useFormatter, useTranslations } from "next-intl";
-import type { OrderStatus } from "@/types/order";
+import type { ItemStatus } from "@/types/order-model";
 
 type TimelineEntry = {
-  status: OrderStatus;
+  status: ItemStatus;
   /** ISO date-time string. */
   changedAt: string;
 };

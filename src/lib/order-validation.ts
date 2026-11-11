@@ -1,10 +1,9 @@
-import { hasLocale } from "next-intl";
-import { routing, type Locale } from "@/i18n/routing";
-import { LIMITS } from "./order-limits";
-import { normalizePhone } from "./phone";
+import { EXPRESS_PERCENT, LIMITS } from "./order-limits.ts";
+import { normalizePhone } from "./phone.ts";
 
-// Server-side validation shared by the "new order" and "edit order" forms.
+// Server-side validation shared by the order forms.
 // Each function returns either a clean value or an error key (translated in the UI).
+// Relative imports end in ".ts" so node:test can run this file directly.
 
 type Result<T, E extends string> = { value: T; error?: undefined } | { value?: undefined; error: E };
 
@@ -25,11 +24,6 @@ export function validatePhone(input: string): Result<string, "phoneRequired" | "
   return phone ? { value: phone } : { error: "phoneInvalid" };
 }
 
-/** Unknown values fall back to the default language instead of failing: it is not worth an error message. */
-export function parseLanguage(input: string): Locale {
-  return hasLocale(routing.locales, input) ? input : routing.defaultLocale;
-}
-
 /** Optional text: empty becomes null. */
 export function validateOptionalText(
   input: string,
@@ -40,18 +34,23 @@ export function validateOptionalText(
 }
 
 /**
- * Optional price in euros, e.g. "15", "15,50", "15.50" or "€ 15,50" -> cents (1550).
+ * Optional price in lira, e.g. "150", "150,50", "150.50" or "₺ 150" -> kuruş (15050).
  * Thousand separators are not accepted, to avoid confusing "1.500" (Turkish) with 1.5.
  */
 export function parsePriceToCents(input: string): Result<number | null, "priceInvalid"> {
-  const cleaned = input.replace(/€/g, "").replace(/\s/g, "");
+  const cleaned = input.replace(/[€₺]/g, "").replace(/\s/g, "");
   if (!cleaned) return { value: null };
   if (!/^\d+([.,]\d{1,2})?$/.test(cleaned)) return { error: "priceInvalid" };
 
-  const euros = Number(cleaned.replace(",", "."));
-  if (euros > LIMITS.priceEuros) return { error: "priceInvalid" };
+  const lira = Number(cleaned.replace(",", "."));
+  if (lira > LIMITS.priceLira) return { error: "priceInvalid" };
   // Math.round avoids floating point errors like 19.99 * 100 = 1998.9999999999998.
-  return { value: Math.round(euros * 100) };
+  return { value: Math.round(lira * 100) };
+}
+
+/** The "express" checkbox: ticked sends "on". Returns the surcharge to copy onto the order. */
+export function validateExpress(input: string): number | null {
+  return input === "on" ? EXPRESS_PERCENT : null;
 }
 
 /** Optional date "YYYY-MM-DD" (what <input type="date"> sends). */

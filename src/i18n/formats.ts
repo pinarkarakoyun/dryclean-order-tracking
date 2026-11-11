@@ -16,7 +16,7 @@ export const formats = {
     },
   },
   number: {
-    /** Price in euros, e.g. "€ 15,00". Pass cents / 100. */
-    price: { style: "currency", currency: "EUR" },
+    /** Price in Turkish lira, e.g. "₺150,00". Pass kuruş / 100. */
+    price: { style: "currency", currency: "TRY" },
   },
 } satisfies Formats;

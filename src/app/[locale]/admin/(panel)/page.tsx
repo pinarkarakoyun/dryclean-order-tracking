@@ -12,10 +12,9 @@ import {
   isOpen,
   todayInShop,
 } from "@/lib/order-utils";
+import { deriveOrderStatus } from "@/lib/order-calc";
 import { listOrders } from "@/lib/orders";
-import { getAllServices } from "@/lib/services";
-import type { Order } from "@/types/order";
-import type { Service } from "@/types/service";
+import type { OrderWithDetails } from "@/types/order-model";
 
 const RECENT_ORDERS_COUNT = 5;
 
@@ -50,20 +49,21 @@ export default async function DashboardPage({
 async function DashboardContent() {
   await requireAdmin();
   const t = await getTranslations("Dashboard");
-  const [orders, services] = await Promise.all([listOrders(), getAllServices()]);
+  const orders = await listOrders();
   const today = todayInShop();
 
   const attention = orders.filter((order) => getDueState(order, today) !== null);
   const incomplete = orders.filter((order) => getMissingFields(order).length > 0);
-  const ready = orders.filter((order) => order.status === "READY_FOR_PICKUP");
-  const inProgress = orders.filter((order) => isOpen(order.status));
+  const statusOf = (order: OrderWithDetails) => deriveOrderStatus(order.items).status;
+  const ready = orders.filter((order) => statusOf(order) === "READY");
+  const inProgress = orders.filter((order) => isOpen(statusOf(order)));
   const recent = orders.slice(0, RECENT_ORDERS_COUNT);
 
   const sections: {
     id: string;
     title: string;
     hint?: string;
-    orders: Order[];
+    orders: OrderWithDetails[];
     showMissing?: boolean;
   }[] = [
     { id: "attention", title: t("attention"), hint: t("attentionHint"), orders: attention },
@@ -100,7 +100,6 @@ async function DashboardContent() {
             <OrderCard
               key={order.id}
               order={order}
-              service={findService(services, order.serviceId)}
               today={today}
               showMissing={section.showMissing}
             />
@@ -109,10 +108,6 @@ async function DashboardContent() {
       ))}
     </div>
   );
-}
-
-function findService(services: Service[], serviceId: string | null) {
-  return services.find((service) => service.id === serviceId);
 }
 
 function SummaryTile({

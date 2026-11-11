@@ -1,5 +1,5 @@
 import { useTranslations } from "next-intl";
-import type { MissingField } from "@/types/order";
+import type { MissingField } from "@/types/order-model";
 
 export function MissingFieldChips({ fields }: { fields: MissingField[] }) {
   const t = useTranslations("MissingField");

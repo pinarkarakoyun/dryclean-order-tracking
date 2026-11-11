@@ -1,35 +1,26 @@
-import { useFormatter, useLocale, useTranslations } from "next-intl";
+import { useFormatter, useTranslations } from "next-intl";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Link } from "@/i18n/navigation";
-import {
-  dateOnlyToDate,
-  getDueState,
-  getMissingFields,
-} from "@/lib/order-utils";
-import type { Order } from "@/types/order";
-import type { Service } from "@/types/service";
+import { deriveOrderStatus } from "@/lib/order-calc";
+import { dateOnlyToDate, getDueState, getMissingFields } from "@/lib/order-utils";
+import type { OrderWithDetails } from "@/types/order-model";
 import { DueBadge } from "./DueBadge";
 import { MissingFieldChips } from "./MissingFieldChips";
 
 type OrderCardProps = {
-  order: Order;
-  service: Service | undefined;
+  order: OrderWithDetails;
   /** Today's date in the shop ("YYYY-MM-DD"), to show late orders. */
   today: string;
   showMissing?: boolean;
 };
 
 /** Order summary that opens the order detail page. */
-export function OrderCard({
-  order,
-  service,
-  today,
-  showMissing = false,
-}: OrderCardProps) {
+export function OrderCard({ order, today, showMissing = false }: OrderCardProps) {
   const t = useTranslations("OrderCard");
   const format = useFormatter();
-  const locale = useLocale();
 
+  const { status } = deriveOrderStatus(order.items);
+  const activeItems = order.items.filter((item) => item.status !== "CANCELLED");
   const missing = showMissing ? getMissingFields(order) : [];
 
   return (
@@ -39,24 +30,28 @@ export function OrderCard({
     >
       <span className="flex flex-wrap items-center justify-between gap-2">
         <span className="text-lg font-bold">
-          #{order.orderNumber} · {order.customerName}
+          #{order.orderNumber} · {order.customer.name}
         </span>
-        <StatusBadge status={order.status} />
+        <span className="flex flex-wrap items-center gap-2">
+          {order.expressPercent !== null && (
+            <span className="rounded-full bg-red-700 px-2 py-0.5 text-sm font-bold text-white">
+              {t("express")}
+            </span>
+          )}
+          <StatusBadge status={status} />
+        </span>
       </span>
 
       <span className="text-muted">
-        {service ? service.name[locale] : t("noService")}
-        {order.clothingType && ` · ${order.clothingType}`}
+        {t("itemCount", { count: activeItems.length })}
+        {activeItems.length > 0 && ` · ${activeItems.map((item) => item.garmentName).join(", ")}`}
       </span>
 
       <span className="flex flex-wrap items-center gap-2">
         <span>
           {order.estimatedReadyDate
             ? t("readyBy", {
-                date: format.dateTime(
-                  dateOnlyToDate(order.estimatedReadyDate),
-                  "dateLong",
-                ),
+                date: format.dateTime(dateOnlyToDate(order.estimatedReadyDate), "dateLong"),
               })
             : t("noDate")}
         </span>

@@ -3,27 +3,21 @@ import { getTranslations } from "next-intl/server";
 import { EditOrderForm } from "@/components/admin/EditOrderForm";
 import { initPageLocale } from "@/i18n/page-locale";
 import { requireAdmin } from "@/lib/auth";
-import { getOrderWithHistory } from "@/lib/orders";
-import { formatPhone } from "@/lib/phone";
-import { getAllServices } from "@/lib/services";
+import { getOrderDetail } from "@/lib/orders";
 
 // Loading state and "not found" come from the parent [id] folder (loading.tsx, not-found.tsx).
 export default async function EditOrderPage({
   params,
 }: PageProps<"/[locale]/admin/orders/[id]/edit">) {
-  const locale = await initPageLocale(params);
+  await initPageLocale(params);
   await requireAdmin();
   const { id } = await params;
 
-  const result = await getOrderWithHistory(id);
+  const result = await getOrderDetail(id);
   if (!result) notFound();
   const { order } = result;
 
   const t = await getTranslations("EditOrder");
-  // Active services, plus the current one if it was deactivated in the meantime.
-  const services = (await getAllServices())
-    .filter((service) => service.isActive || service.id === order.serviceId)
-    .map((service) => ({ id: service.id, name: service.name[locale] }));
 
   return (
     <div className="flex flex-col gap-6">
@@ -34,24 +28,13 @@ export default async function EditOrderPage({
 
       <EditOrderForm
         orderId={order.id}
-        services={services}
         initialValues={{
-          name: order.customerName,
-          phone: formatPhone(order.customerPhone),
-          language: order.customerLanguage,
-          serviceId: order.serviceId ?? "",
-          clothingType: order.clothingType ?? "",
+          express: order.expressPercent !== null ? "on" : "",
+          estimatedReadyDate: order.estimatedReadyDate ?? "",
           publicDescription: order.publicDescription ?? "",
           internalNote: order.internalNote ?? "",
-          price: order.priceCents === null ? "" : formatPriceInput(order.priceCents),
-          estimatedReadyDate: order.estimatedReadyDate ?? "",
         }}
       />
     </div>
   );
-}
-
-/** 1550 -> "15,50", the way people type prices. */
-function formatPriceInput(cents: number): string {
-  return (cents / 100).toFixed(2).replace(".", ",");
 }
