@@ -33,3 +33,4 @@ her seferinde tek bir değişiklik yaparak ilerle. Türkçe konuş.
 ## Dükkâna sorulacaklar (henüz cevapsız)
 Temizlik dükkânda mı, merkezi tesiste mi? Etiket sistemi? Bilgisayar/tablet var mı?
 Veresiye var mı? Kâğıt fiş mi, WhatsApp linki mi? Gerçek fiyat listesi?
+Kaç hızlı fiyat butonu (şimdilik en fazla 8)? Ürünler alfabetik mi, en çok kullanılan üstte mi?
