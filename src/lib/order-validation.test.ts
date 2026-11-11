@@ -1,6 +1,32 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { parsePriceToCents, resolveItemPrice, validateExpress } from "./order-validation.ts";
+import {
+  parsePriceToCents,
+  resolveItemPrice,
+  resolveItemSource,
+  validateExpress,
+} from "./order-validation.ts";
+
+test("item from the price list", () => {
+  assert.deepEqual(resolveItemSource("list-id", ""), { value: { kind: "list", id: "list-id" } });
+});
+
+test("item typed by hand", () => {
+  assert.deepEqual(resolveItemSource("", "Halı"), { value: { kind: "custom", name: "Halı" } });
+});
+
+// The form says "or": a typed name must not be silently ignored in favour of the list item.
+test("list item and typed name together is an error", () => {
+  assert.deepEqual(resolveItemSource("list-id", "Halı"), { error: "bothGiven" });
+});
+
+test("neither list item nor name", () => {
+  assert.deepEqual(resolveItemSource("", ""), { error: "nameRequired" });
+});
+
+test("typed name too long", () => {
+  assert.deepEqual(resolveItemSource("", "x".repeat(61)), { error: "tooLong" });
+});
 
 test("price input to kurus", () => {
   assert.deepEqual(parsePriceToCents("150,50"), { value: 15050 });

@@ -97,7 +97,9 @@ export default async function OrderDetailPage({ params, searchParams }: Props) {
           + {tAddItem("title")}
         </summary>
         <div className="border-t border-border p-4">
+          {/* key: a fresh, empty form after each added item (otherwise the last price stays). */}
           <AddItemForm
+            key={order.items.length}
             orderId={order.id}
             priceList={priceList.map((entry) => ({
               id: entry.id,

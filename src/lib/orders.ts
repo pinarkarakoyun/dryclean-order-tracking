@@ -12,6 +12,7 @@ import { toCustomer, type CustomerRow } from "./customers";
 import { getDb } from "./db";
 import { isUuid } from "./ids";
 import { deriveOrderStatus, parseTagLabel, tagLabel } from "./order-calc";
+import { collectAllPages } from "./paging";
 import { generateTrackingToken } from "./token";
 
 // THE single place for order data access (Supabase/PostgreSQL).
@@ -113,16 +114,22 @@ function fail(what: string, message: string): never {
   throw new Error(`Database error (${what}): ${message}`);
 }
 
-/** All orders with customer and items, newest first. */
+/** All orders with customer and items, newest first. Read page by page: no silent 1000-row cap. */
 export async function listOrders(): Promise<OrderWithDetails[]> {
   await connection();
-  const { data, error } = await getDb()
-    .from("orders")
-    .select(DETAILS)
-    .order("created_at", { ascending: false })
-    .returns<OrderDetailsRow[]>();
-  if (error) fail("orders", error.message);
-  return data.map(toOrderWithDetails);
+  const rows = await collectAllPages(async (from, to) => {
+    const { data, error } = await getDb()
+      .from("orders")
+      .select(DETAILS)
+      .order("created_at", { ascending: false })
+      // Tie-breaker: orders created in one transaction share created_at; pages must not overlap.
+      .order("id")
+      .range(from, to)
+      .returns<OrderDetailsRow[]>();
+    if (error) fail("orders", error.message);
+    return data;
+  });
+  return rows.map(toOrderWithDetails);
 }
 
 export type OrderSearch = {

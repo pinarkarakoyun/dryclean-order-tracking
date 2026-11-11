@@ -7,9 +7,10 @@ import { getMessages } from "next-intl/server";
 
 type Namespace = keyof Messages;
 
-/** Used by client components on the public site (not-found page). */
+/** Used by client components on the public site (not-found and error pages). */
 export const PUBLIC_CLIENT_NAMESPACES = [
   "NotFound",
+  "ErrorPage",
 ] as const satisfies readonly Namespace[];
 
 /** Used by client components in the admin panel (forms, not-found page). */
@@ -19,6 +20,7 @@ export const ADMIN_CLIENT_NAMESPACES = [
   "EditOrder",
   "OrderDetail",
   "AddItem",
+  "ErrorPage",
 ] as const satisfies readonly Namespace[];
 
 export async function getClientMessages(

@@ -91,6 +91,6 @@ Required before entering real customer data:
 
 - Status changes allow only "next step" and "cancel" until roadmap step 4 (undo, step back, delivery confirmation).
 - No photo upload, price list editing or customer editing yet (roadmap step 5); the `item_photos` table and private `item-photos` bucket exist.
-- Orders are searched and filtered in memory after one query: fine for one shop, revisit if the list grows into the thousands.
+- All orders are read (page by page, past Supabase's 1000-row limit) and searched in memory: fine for one shop, but slower as orders pile up. Move search and filters into SQL when it gets slow.
 - In production mode the login cookie is HTTPS-only, so `next start` over plain `http://192.168…` cannot keep you logged in. Use `npm run dev` for local demos.
 - `docs/PRD.md` still describes the tailoring project; the spec above takes precedence.

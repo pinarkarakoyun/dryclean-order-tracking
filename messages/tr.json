@@ -33,6 +33,11 @@
     "noCode": "Fişiniz veya linkiniz yok mu? Bize ulaşın, yardımcı olalım.",
     "eyebrow": "Siparişiniz"
   },
+  "ErrorPage": {
+    "title": "Bir sorun oluştu",
+    "text": "Sayfa şu anda yüklenemedi. Bu genellikle kısa süren bir bağlantı sorunudur. Biraz sonra tekrar deneyin; sorun devam ederse dükkânı arayın.",
+    "retry": "Tekrar dene"
+  },
   "NotFound": {
     "title": "Sayfa bulunamadı",
     "text": "Bu sayfa mevcut değil. Linki kontrol edin veya dükkânla iletişime geçin."
@@ -230,6 +235,7 @@
     "submit": "Parçayı ekle",
     "submitting": "Ekleniyor…",
     "nameRequired": "Listeden bir parça seçin veya adını yazın.",
+    "bothGiven": "Ya listeden seçin ya da adını yazın, ikisini birden değil.",
     "itemInvalid": "Listeden geçerli bir parça seçin.",
     "tooLong": "Bu metin çok uzun.",
     "priceInvalid": "Geçerli bir tutar girin, örneğin 150 veya 150,50."

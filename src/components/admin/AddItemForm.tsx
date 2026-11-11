@@ -32,13 +32,26 @@ export function AddItemForm({ orderId, priceList }: AddItemFormProps) {
   const t = useTranslations("AddItem");
   const [state, formAction] = useActionState(addItemAction, initialState);
   const { errors, values } = state;
-  // The price box is controlled: picking a list item or a quick price fills it, and it stays editable.
+  // Controlled fields: picking a list item fills the price and clears a typed name,
+  // typing a name clears the list choice ("or", never both). The price stays editable.
+  const [listItemId, setListItemId] = useState(values.priceListItemId);
+  const [customName, setCustomName] = useState(values.customName);
   const [price, setPrice] = useState(values.price);
   const errorText = (key: AddItemErrorKey | undefined) => (key ? t(key) : undefined);
 
   const onPickListItem = (id: string) => {
     const entry = priceList.find((candidate) => candidate.id === id);
+    setListItemId(id);
+    if (entry) setCustomName("");
     setPrice(entry ? toPriceInput(entry.priceKurus) : "");
+  };
+
+  const onTypeName = (name: string) => {
+    setCustomName(name);
+    if (name && listItemId) {
+      setListItemId("");
+      setPrice("");
+    }
   };
 
   return (
@@ -50,7 +63,7 @@ export function AddItemForm({ orderId, priceList }: AddItemFormProps) {
         <select
           id="priceListItemId"
           name="priceListItemId"
-          defaultValue={values.priceListItemId}
+          value={listItemId}
           onChange={(event) => onPickListItem(event.target.value)}
           className="min-h-14 w-full rounded-xl border-2 border-border bg-surface px-3 text-lg"
         >
@@ -69,7 +82,8 @@ export function AddItemForm({ orderId, priceList }: AddItemFormProps) {
           name="customName"
           autoComplete="off"
           maxLength={LIMITS.garmentName}
-          defaultValue={values.customName}
+          value={customName}
+          onChange={(event) => onTypeName(event.target.value)}
         />
       </Field>
 

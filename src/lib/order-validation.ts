@@ -49,6 +49,24 @@ export function parsePriceToCents(input: string): Result<number | null, "priceIn
 }
 
 /**
+ * Where a new order item comes from: the price list OR a typed name, never both silently.
+ * The list item id is checked against the database by the caller.
+ */
+export function resolveItemSource(
+  priceListItemId: string,
+  customName: string,
+): Result<
+  { kind: "list"; id: string } | { kind: "custom"; name: string },
+  "nameRequired" | "bothGiven" | "tooLong"
+> {
+  if (priceListItemId && customName) return { error: "bothGiven" };
+  if (priceListItemId) return { value: { kind: "list", id: priceListItemId } };
+  if (!customName) return { error: "nameRequired" };
+  if (customName.length > LIMITS.garmentName) return { error: "tooLong" };
+  return { value: { kind: "custom", name: customName } };
+}
+
+/**
  * Price of a new order item. A typed price always wins (the same garment type is not
  * always the same price); an empty box falls back to the price list item, if one was chosen.
  */

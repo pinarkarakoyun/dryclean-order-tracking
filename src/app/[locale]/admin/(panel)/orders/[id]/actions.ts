@@ -8,6 +8,7 @@ import { LIMITS } from "@/lib/order-limits";
 import {
   readText,
   resolveItemPrice,
+  resolveItemSource,
   validateOptionalText,
 } from "@/lib/order-validation";
 import { addOrderItem, changeItemStatus } from "@/lib/orders";
@@ -50,7 +51,12 @@ export async function changeItemStatusAction(formData: FormData): Promise<void> 
   redirect({ href: detail(result === "conflict" ? "conflict" : "status"), locale });
 }
 
-export type AddItemErrorKey = "nameRequired" | "itemInvalid" | "tooLong" | "priceInvalid";
+export type AddItemErrorKey =
+  | "nameRequired"
+  | "bothGiven"
+  | "itemInvalid"
+  | "tooLong"
+  | "priceInvalid";
 
 export type AddItemState = {
   errors: Partial<Record<"item" | "price" | "rack" | "note", AddItemErrorKey>>;
@@ -83,9 +89,12 @@ export async function addItemAction(
   let listPriceKurus: number | null = null;
   let priceListItemId: string | null = null;
 
-  if (values.priceListItemId) {
+  const source = resolveItemSource(values.priceListItemId, values.customName);
+  if (source.error) {
+    errors.item = source.error;
+  } else if (source.value.kind === "list") {
     // The name and the default price come from the database, not from the form.
-    const listItem = await getPriceListItem(values.priceListItemId);
+    const listItem = await getPriceListItem(source.value.id);
     if (!listItem || !listItem.isActive) {
       errors.item = "itemInvalid";
     } else {
@@ -93,12 +102,8 @@ export async function addItemAction(
       listPriceKurus = listItem.priceKurus;
       priceListItemId = listItem.id;
     }
-  } else if (!values.customName) {
-    errors.item = "nameRequired";
-  } else if (values.customName.length > LIMITS.garmentName) {
-    errors.item = "tooLong";
   } else {
-    garmentName = values.customName;
+    garmentName = source.value.name;
   }
 
   // The same garment type is not always the same price: a typed price wins over the list price.
