@@ -30,6 +30,9 @@ export function AdminHeader() {
               <li>
                 <NavLink href="/admin/orders">{t("orders")}</NavLink>
               </li>
+              <li>
+                <NavLink href="/admin/customers">{t("customers")}</NavLink>
+              </li>
             </ul>
           </nav>
           {/* A form, so logging out works even without JavaScript. */}

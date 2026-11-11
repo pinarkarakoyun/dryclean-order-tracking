@@ -6,6 +6,8 @@ export const formats = {
   dateTime: {
     /** e.g. "Sal 20 Ekim" */
     dateLong: { weekday: "short", day: "numeric", month: "long" },
+    /** e.g. "20 Eki 2026" */
+    date: { day: "numeric", month: "short", year: "numeric" },
     /** e.g. "20 Eki 2026 14:35" */
     dateTime: {
       day: "numeric",

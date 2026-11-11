@@ -55,7 +55,8 @@
     "logout": "Çıkış yap",
     "dashboard": "Genel bakış",
     "orders": "Siparişler",
-    "newOrder": "Yeni sipariş"
+    "newOrder": "Yeni sipariş",
+    "customers": "Müşteriler"
   },
   "AdminLogin": {
     "title": "Giriş",
@@ -100,6 +101,27 @@
     "filterLabel": "Duruma göre filtrele",
     "all": "Tümü",
     "resultCount": "{count, plural, =0 {Sipariş bulunamadı.} other {# sipariş}}"
+  },
+  "Customers": {
+    "title": "Müşteriler",
+    "searchLabel": "İsim veya telefon ile arayın",
+    "search": "Ara",
+    "clearSearch": "Aramayı temizle",
+    "resultCount": "{count} müşteri",
+    "noResults": "Müşteri bulunamadı",
+    "orderSummary": "{count} sipariş · son sipariş {date}",
+    "noOrdersYet": "Henüz sipariş yok",
+    "details": "Bilgiler",
+    "phone": "Telefon",
+    "preferenceNote": "Müşteri tercihi",
+    "edit": "Düzenle",
+    "orders": "Siparişler",
+    "noticeSaved": "Müşteri bilgileri kaydedildi"
+  },
+  "CustomerNotFound": {
+    "title": "Müşteri bulunamadı",
+    "text": "Bu müşteri yok ya da bağlantı hatalı.",
+    "back": "Tüm müşteriler"
   },
   "OrderDetail": {
     "backToOrders": "Tüm siparişler",
