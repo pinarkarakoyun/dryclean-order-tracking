@@ -1,64 +1,96 @@
-# Mustan Tailoring Management System
+# Kuru Temizleme Sipariş Takip
 
-Order management and customer tracking prototype for a small tailoring shop in the Netherlands.
-Product requirements: [docs/PRD.md](docs/PRD.md).
+Order tracking for a dry-cleaning shop in Antalya, tracked **per garment**: an order has items, each with its own tag number (`1048-1`) and status. Customers follow their order through a secret QR/tracking link, without an account.
 
-**Status: clickable prototype with demo data.** Orders live in server memory and reset when the server restarts.
+- Design: [docs/superpowers/specs/2026-11-09-data-model-design.md](docs/superpowers/specs/2026-11-09-data-model-design.md)
+- Implementation plan: [docs/superpowers/plans/2026-11-11-data-model-database.md](docs/superpowers/plans/2026-11-11-data-model-database.md)
+
+**Status:** prototype on a Supabase development project with **demo data only**. Not ready for real customer data yet (see "Before going live").
 
 ## Getting started
 
 ```bash
 npm install
-cp .env.example .env.local   # then fill in ADMIN_PASSWORD and AUTH_SECRET
-npm run dev                  # http://localhost:3000
+cp .env.example .env.local   # then fill in the values below
+npm run dev                  # http://localhost:3000/admin
 ```
 
-Generate `AUTH_SECRET` with `openssl rand -base64 32`.
+| Variable | Where it comes from |
+|---|---|
+| `ENABLE_ORDER_TRACKING` | `true` turns on `/admin` and `/track` |
+| `ADMIN_PASSWORD` | Your own password for the admin panel |
+| `AUTH_SECRET` | `openssl rand -base64 32` |
+| `SUPABASE_URL` | Supabase → Project Settings → Data API (`https://<ref>.supabase.co`) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API Keys → **Secret key** (`sb_secret_…`). Server only: never share it, never prefix it with `NEXT_PUBLIC_` |
 
-### Order module switch
+## Database setup (Supabase)
 
-`ENABLE_ORDER_TRACKING=true` turns on the order module: admin panel (`/admin`), customer
-tracking (`/track`), QR codes and WhatsApp order messages. Any other value, or no value,
-turns it off: the site is then a plain business website, `/admin` and `/track` return 404,
-and the texts about tracking and the privacy sections about order data are hidden.
-Restart `npm run dev` (or build again) after changing it.
+1. Create a project (Free plan, region **Central EU (Frankfurt)**). Under Security, keep "Enable Data API" on and turn **"Automatically expose new tables" off**.
+2. In the SQL Editor, run each file in this order (one file per run):
 
-## Demo walkthrough
+| # | File | Expected result |
+|---|---|---|
+| 1 | `supabase/migrations/0001_schema.sql` | Success |
+| 2 | `supabase/migrations/0002_append_only.sql` | Success |
+| 3 | `supabase/checks/01_schema.sql` | 8 rows starting with `OK:` |
+| 4 | `supabase/migrations/0003_rpc.sql` | Success |
+| 5 | `supabase/checks/02_rpc.sql` | 8 rows starting with `OK:` |
+| 6 | `supabase/seed.sql` (demo data, run once) | 4 orders |
 
-1. **Public site**: `/` (Dutch), `/tr`, `/en`. Pages: home, services, how it works, contact, privacy.
-2. **Admin login**: `/admin` → password from `ADMIN_PASSWORD`.
-3. **Dashboard**: orders that need attention, are incomplete, ready for pickup, in progress, newest.
-4. **New order**: "+ Nieuwe bestelling" → only name and phone are required.
-5. **Order detail**: status buttons, WhatsApp message (in the customer's language), QR code and tracking link, edit page.
-6. **Customer tracking**: open the QR code / link → `/track/<token>` (no login, no private data).
+3. Put the URL and secret key in `.env.local`, then check the connection:
 
-To scan a QR code with a phone in development, open the admin on the computer's network
-address (e.g. `http://192.168.1.15:3000/admin`, shown when `npm run dev` starts) and use the same Wi-Fi.
-
-## Project structure
-
+```bash
+node --env-file=.env.local supabase/checks/connection.mjs
 ```
-messages/            Translations (nl = reference, tr, en)
-src/app/[locale]/    Pages; (site) = public website, admin = admin panel
-src/components/      UI building blocks (ui = shared, public, admin)
-src/i18n/            Language routing, formats, client message selection
-src/lib/orders.ts    The single data access layer (mock data now, database later)
-src/lib/             Auth, validation, phone, QR/tracking, WhatsApp helpers
-src/proxy.ts         Language routing + admin route protection
+
+Expected: `OK: connected, 8 price list items`.
+
+To copy a file to the clipboard from the terminal, keep the text in UTF-8, or Turkish letters break:
+
+```bash
+LANG=en_US.UTF-8 pbcopy < supabase/seed.sql
 ```
+
+The status history is **append-only** (a database trigger blocks every UPDATE and DELETE), so demo data cannot be deleted and re-seeded. Start from a new project instead.
 
 ## Checks
 
 ```bash
+npm test             # pure functions: tag numbers, order status, totals, prices, phone
+npx tsc --noEmit
 npm run lint
 npm run build
 ```
 
-## Known limitations (prototype)
+## Project structure
 
-- Demo data in memory: new orders disappear on restart. A real database (Supabase/PostgreSQL) replaces `src/lib/orders.ts` later.
-- One shared admin password, no rate limiting beyond a short delay.
+```
+supabase/migrations/   Tables, constraints, append-only trigger, database functions
+supabase/checks/       SQL checks (run in the SQL Editor) and the connection check
+supabase/seed.sql      Fictional demo data
+messages/tr.json       All Turkish texts
+src/types/order-model.ts  Order, item, customer, status types
+src/lib/order-calc.ts  Tag numbers, order status from items, totals (tested)
+src/lib/item-status.ts Status rules for one garment (step 4: canTransition)
+src/lib/orders.ts      The single order data access layer (Supabase)
+src/lib/db.ts          The only database client (server only)
+src/app/[locale]/      Pages: admin panel and the public tracking page
+```
+
+## Before going live
+
+Required before entering real customer data:
+
+1. **KVKK:** transfer of data abroad (Supabase has no region in Turkey), privacy notice, deletion requests (plan: anonymize the customer, delete photos, keep the history).
+2. **Backups and plan limits:** check Supabase's current backup and project-pausing rules.
+3. **Login:** add rate limiting; today there is one shared password.
+4. **Tracking link lifetime:** decide whether links stop working after pickup.
+5. **Production:** a separate Supabase project and separate keys.
+
+## Known limitations
+
+- Status changes allow only "next step" and "cancel" until roadmap step 4 (undo, step back, delivery confirmation).
+- No photo upload, price list editing or customer editing yet (roadmap step 5); the `item_photos` table and private `item-photos` bucket exist.
+- Orders are searched and filtered in memory after one query: fine for one shop, revisit if the list grows into the thousands.
 - In production mode the login cookie is HTTPS-only, so `next start` over plain `http://192.168…` cannot keep you logged in. Use `npm run dev` for local demos.
-- An unknown tracking token shows the translated "not found" page with HTTP status 200 in production (the page is `noindex`).
-- Next.js `partialPrefetching` is turned off (see `next.config.ts`): with Dutch URLs without a `/nl` prefix it caused an endless prefetch loop for `/track`.
-- Shop address, phone, opening hours and service prices are placeholders; Dutch texts need review by a native speaker.
+- `docs/PRD.md` still describes the tailoring project; the spec above takes precedence.
