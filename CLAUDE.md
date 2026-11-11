@@ -15,18 +15,19 @@ her seferinde tek bir değişiklik yaparak ilerle. Türkçe konuş.
 - Durumlar: Teslim alındı → Temizlemede → Ütüde → Hazır → Teslim edildi (+ İptal)
 - Yanlış tıklama: 8 sn "Geri al" bildirimi + "Önceki aşamaya al" seçeneği;
   "Teslim edildi" onay ister
-- Geçiş kuralları fonksiyonunu ben yazacağım; hazırlarken bana bırak
+- Geçiş kuralları (canTransition, src/lib/item-status.ts) Claude tarafından yazıldı:
+  aşama atlanabilir; "Önceki aşamaya al" tek adım geri (Teslim edildi dahil);
+  İptal edilen parça yalnızca "Teslim alındı"ya döner; Teslim edilen parça iptal edilemez
 - MVP'de: fiyat listesi (panelden düzenlenebilir), ekspres (+%50), leke/hasar
   fotoğrafı, askı/raf konumu, müşteri tercih notları, QR'lı müşteri takip sayfası
 - Bildirim: şimdilik wa.me linki (ücretsiz), otomatik SMS/WhatsApp API sonra
 - Kıyafete QR yok: etiket numarası (1048-1) dükkânın kâğıt etiketine yazılır
 - Dil: next-intl kalır, sadece tr. Giriş: tek ortak şifre (şimdilik)
-- Veri şu an bellekte (globalThis); gerçek veritabanı ZORUNLU (muhtemelen
-  Supabase/PostgreSQL, karar 3. bölümde)
+- Veritabanı: Supabase/PostgreSQL (geliştirme projesi Frankfurt'ta, sadece demo veri)
 
 ## Yol haritası
-1. Keşif ✅  2. Kopyala + temizle  3. Veri modeli + veritabanı
-4. Durum geçişleri + geri alma  5. Ekranlar (prototipe göre)
+1. Keşif ✅  2. Kopyala + temizle ✅  3. Veri modeli + veritabanı ✅
+4. Durum geçişleri + geri alma ✅  5. Ekranlar (prototipe göre)
 6. Fiş yazdırma + WhatsApp  7. Yayına alma + demo
 
 ## Dükkâna sorulacaklar (henüz cevapsız)
