@@ -19,4 +19,4 @@ if (error) {
   console.error(`FAIL: ${error.message}`);
   process.exit(1);
 }
-console.log(`OK: connected, ${count} price list items`);
+console.log(`OK: connected, ${count} products`);

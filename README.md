@@ -36,7 +36,9 @@ npm run dev                  # http://localhost:3000/admin
 | 4 | `supabase/migrations/0003_rpc.sql` | Success |
 | 5 | `supabase/migrations/0004_conflict_null_check.sql` | Success |
 | 6 | `supabase/checks/02_rpc.sql` | 9 rows starting with `OK:` |
-| 7 | `supabase/seed.sql` (demo data, run once) | 4 orders |
+| 7 | `supabase/migrations/0005_products_and_quick_prices.sql` | Success |
+| 8 | `supabase/checks/03_products.sql` | 4 rows starting with `OK:` |
+| 9 | `supabase/seed.sql` (demo data, run once) | 4 orders |
 
 3. Put the URL and secret key in `.env.local`, then check the connection:
 
@@ -44,7 +46,7 @@ npm run dev                  # http://localhost:3000/admin
 node --env-file=.env.local supabase/checks/connection.mjs
 ```
 
-Expected: `OK: connected, 8 price list items`.
+Expected: `OK: connected, 8 products`.
 
 To copy a file to the clipboard from the terminal, keep the text in UTF-8, or Turkish letters break:
 

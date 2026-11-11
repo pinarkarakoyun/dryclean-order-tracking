@@ -1,19 +1,20 @@
 -- DEMO DATA ONLY: fictional customers and example prices. Never real customer data.
--- Run once, after 0001-0003. A second run stops on the unique tracking tokens.
+-- Run once, after 0001-0005. A second run stops on the unique tracking tokens.
 -- Orders and status changes go through the same functions the app uses, so the history exists too.
 
-insert into public.price_list_items (name, price_kurus, sort_order)
-select name, price_kurus, sort_order
+-- Products have no price (0005): the price is typed per order item.
+insert into public.price_list_items (name)
+select name
 from (values
-  ('Gömlek', 12000, 1),
-  ('Pantolon', 15000, 2),
-  ('Etek', 15000, 3),
-  ('Kazak', 18000, 4),
-  ('Ceket', 25000, 5),
-  ('Elbise', 30000, 6),
-  ('Takım elbise', 40000, 7),
-  ('Mont / Palto', 45000, 8)
-) as demo (name, price_kurus, sort_order)
+  ('Gömlek'),
+  ('Pantolon'),
+  ('Etek'),
+  ('Kazak'),
+  ('Ceket'),
+  ('Elbise'),
+  ('Takım elbise'),
+  ('Mont / Palto')
+) as demo (name)
 where not exists (select 1 from public.price_list_items);
 
 do $$
