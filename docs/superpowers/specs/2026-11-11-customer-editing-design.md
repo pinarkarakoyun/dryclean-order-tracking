@@ -96,8 +96,8 @@ Bütün veritabanı işleri `src/lib` içindeki veri katmanında kalır. Her ça
 
 ### 5.2 `filterCustomers(list, query)` ve `sortCustomers(list)` — `src/lib/customer-search.ts`
 - Arama metni kırpılır; boşsa liste aynen döner.
-- Ad eşleşmesi Türkçe büyük-küçük harf kurallarıyla yapılır (`toLocaleLowerCase("tr-TR")`): "İ"→"i", "I"→"ı". "ELİF" araması "Elif"i bulur.
-- Telefon eşleşmesi yalnızca rakamlarla yapılır: aramadaki rakam dışı karakterler atılır, en az 3 rakam varsa telefonun rakamlarında aranır. "0532 123", "+90532123…" içinde bulunur. Baştaki "0" ile ülke kodu farkı da kapsanır: arama "0" ile başlıyorsa baştaki "0" atılarak da denenir.
+- Ad eşleşmesi sipariş aramasıyla **aynı** kuralı kullanır: aksan ve büyük-küçük harf farkı yok sayılır, "ı" ile "i" aynı sayılır. "ELİF" araması "Elif"i, "yilmaz" araması "Yılmaz"ı, "celik" araması "Çelik"i bulur. Bu kural `orders.ts` içindeki `normalizeText`'ten ortak bir dosyaya (`src/lib/text-search.ts`) taşınır, iki arama da onu kullanır.
+- Telefon eşleşmesi yalnızca rakamlarla yapılır: aramadaki rakam dışı karakterler ve baştaki sıfırlar atılır; en az 3 rakam kalırsa telefonun rakamlarında aranır. "0555 000", "+905550000…" içinde bulunur.
 - Sıralama §3.2'deki kurala uyar.
 
 ### 5.3 `parseReturnTo(from, customerId)` — `src/lib/customer-validation.ts`
