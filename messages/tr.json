@@ -314,6 +314,7 @@
     "nameTooLong": "Ürün adı en fazla 60 karakter olabilir.",
     "duplicateActive": "Bu ürün zaten listede.",
     "duplicateHidden": "Bu ürün gizlenenler arasında var. Aşağıdan geri getirebilirsiniz.",
+    "duplicateHiddenRename": "Bu ad gizlenen bir üründe kullanılıyor. O ürünü Ürünler sayfasından geri getirebilirsiniz.",
     "noticeProductAdded": "Ürün eklendi",
     "noticeProductRenamed": "Ürün kaydedildi",
     "noticeProductHidden": "{name} gizlendi",

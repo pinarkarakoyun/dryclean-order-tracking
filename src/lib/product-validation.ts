@@ -3,7 +3,12 @@ import type { Product } from "@/types/order-model";
 import { LIMITS } from "./order-limits.ts";
 import { normalizeSearchText } from "./text-search.ts";
 
-export type ProductNameErrorKey = "nameRequired" | "nameTooLong" | "duplicateActive" | "duplicateHidden";
+export type ProductNameErrorKey =
+  | "nameRequired"
+  | "nameTooLong"
+  | "duplicateActive"
+  | "duplicateHidden"
+  | "duplicateHiddenRename";
 
 /** " Takım   elbise " -> "Takım elbise": outer spaces go, inner spaces become one. */
 function cleanName(raw: string): string {
@@ -37,6 +42,18 @@ export function findDuplicateProduct(
   const match = products.find((product) => product.id !== ignoreId && nameKey(product.name) === key);
   if (!match) return null;
   return { kind: match.isActive ? "active" : "hidden", id: match.id };
+}
+
+/**
+ * The message for a duplicate name. The products page shows the hidden list below the form;
+ * the rename page does not, so it points to the products page instead.
+ */
+export function duplicateErrorKey(
+  kind: "active" | "hidden",
+  page: "add" | "rename",
+): ProductNameErrorKey {
+  if (kind === "active") return "duplicateActive";
+  return page === "add" ? "duplicateHidden" : "duplicateHiddenRename";
 }
 
 /** Turkish alphabetical order ("Ceket" < "Çanta" < "Dikiş"), ties by id; returns a new array. */

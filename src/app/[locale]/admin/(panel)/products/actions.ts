@@ -5,7 +5,11 @@ import { getLocale } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { readText } from "@/lib/order-validation";
-import { validateProductName, type ProductNameErrorKey } from "@/lib/product-validation";
+import {
+  duplicateErrorKey,
+  validateProductName,
+  type ProductNameErrorKey,
+} from "@/lib/product-validation";
 import { createProduct, renameProduct, setProductActive } from "@/lib/products";
 import { validateQuickPrice, type QuickPriceErrorKey } from "@/lib/quick-price-validation";
 import { addQuickPrice, deleteQuickPrice, listQuickPrices } from "@/lib/quick-prices";
@@ -15,10 +19,6 @@ export type ProductFormState = {
   /** What the user typed, so the form keeps it after an error. */
   value: string;
 };
-
-function duplicateError(kind: "active" | "hidden"): ProductNameErrorKey {
-  return kind === "active" ? "duplicateActive" : "duplicateHidden";
-}
 
 /** Adds a product from the products page. */
 export async function addProductAction(
@@ -34,7 +34,7 @@ export async function addProductAction(
 
   const result = await createProduct(validated.value);
   if (!result.ok) {
-    return { error: "duplicate" in result ? duplicateError(result.duplicate) : null, value };
+    return { error: "duplicate" in result ? duplicateErrorKey(result.duplicate, "add") : null, value };
   }
 
   redirect({ href: { pathname: "/admin/products", query: { notice: "productAdded" } }, locale });
@@ -57,7 +57,7 @@ export async function renameProductAction(
   const result = await renameProduct(productId, validated.value);
   if (!result.ok) {
     if ("notFound" in result) notFound();
-    return { error: duplicateError(result.duplicate), value };
+    return { error: duplicateErrorKey(result.duplicate, "rename"), value };
   }
 
   redirect({ href: { pathname: "/admin/products", query: { notice: "productRenamed" } }, locale });

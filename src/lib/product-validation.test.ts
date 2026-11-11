@@ -1,7 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { Product } from "@/types/order-model";
-import { findDuplicateProduct, sortProducts, validateProductName } from "./product-validation.ts";
+import {
+  duplicateErrorKey,
+  findDuplicateProduct,
+  sortProducts,
+  validateProductName,
+} from "./product-validation.ts";
 
 const p = (name: string, isActive = true, id = name): Product => ({ id, name, isActive });
 
@@ -36,4 +41,11 @@ test("sorting does not change the input", () => {
   const list = [p("B"), p("A")];
   sortProducts(list);
   assert.deepEqual(list.map((x) => x.name), ["B", "A"]);
+});
+
+test("duplicate message depends on the page: the rename page has no hidden list below", () => {
+  assert.equal(duplicateErrorKey("active", "add"), "duplicateActive");
+  assert.equal(duplicateErrorKey("hidden", "add"), "duplicateHidden");
+  assert.equal(duplicateErrorKey("active", "rename"), "duplicateActive");
+  assert.equal(duplicateErrorKey("hidden", "rename"), "duplicateHiddenRename");
 });
